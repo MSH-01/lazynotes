@@ -1,0 +1,31 @@
+{
+  "name": "lazynotes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MSH-01/lazynotes.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bin": {
+    "lazynotes": "./index.jsx"
+  },
+  "bugs": {
+    "url": "https://github.com/MSH-01/lazynotes/issues"
+  },
+  "homepage": "https://github.com/MSH-01/lazynotes#readme",
+  "dependencies": {
+    "ink": "^6.6.0",
+    "react": "^19.2.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}
