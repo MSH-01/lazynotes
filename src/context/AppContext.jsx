@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
 import {
   readDirectoryTree,
   loadDirectoryChildren,
@@ -8,6 +8,12 @@ import {
   deleteItem as fsDeleteItem,
   readFileContent,
 } from '../utils/fs.js';
+import {
+  loadTodos as fsLoadTodos,
+  saveTodos as fsSaveTodos,
+  buildTodoFlatList,
+  generateTodoId,
+} from '../utils/todos.js';
 
 const AppContext = createContext(null);
 
@@ -25,6 +31,7 @@ const initialState = {
   // UI state
   focusedPanel: 'fileTree',
   modal: null,
+  activeTab: 'files', // 'files' | 'todos'
 
   // Preview state
   previewContent: null,
@@ -33,6 +40,16 @@ const initialState = {
   // Scroll positions
   previewScrollOffset: 0,
   fileTreeScrollOffset: 0,
+
+  // Todos state
+  todos: {
+    categories: [],
+    items: [],
+    selectedIndex: 0,
+    expandedCategories: new Set(['Uncategorised', 'Completed']),
+    flatList: [],
+    scrollOffset: 0,
+  },
 
   // Command log
   commandLog: [],
@@ -93,6 +110,118 @@ function appReducer(state, action) {
       return {
         ...state,
         commandLog: [...state.commandLog, { message: action.payload, timestamp: new Date() }].slice(-50),
+      };
+
+    // Tab switching
+    case 'SET_ACTIVE_TAB':
+      return { ...state, activeTab: action.payload };
+
+    // Todos
+    case 'SET_TODOS':
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          categories: action.payload.categories,
+          items: action.payload.items,
+        },
+      };
+
+    case 'SET_TODO_SELECTION':
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          selectedIndex: action.payload,
+        },
+      };
+
+    case 'TOGGLE_TODO_CATEGORY': {
+      const newExpanded = new Set(state.todos.expandedCategories);
+      if (newExpanded.has(action.payload)) {
+        newExpanded.delete(action.payload);
+      } else {
+        newExpanded.add(action.payload);
+      }
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          expandedCategories: newExpanded,
+        },
+      };
+    }
+
+    case 'UPDATE_TODO_FLAT_LIST':
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          flatList: action.payload,
+        },
+      };
+
+    case 'SET_TODO_SCROLL':
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          scrollOffset: action.payload,
+        },
+      };
+
+    case 'ADD_TODO':
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          items: [...state.todos.items, action.payload],
+        },
+      };
+
+    case 'UPDATE_TODO':
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          items: state.todos.items.map((item) =>
+            item.id === action.payload.id ? { ...item, ...action.payload.updates } : item
+          ),
+        },
+      };
+
+    case 'DELETE_TODO':
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          items: state.todos.items.filter((item) => item.id !== action.payload),
+        },
+      };
+
+    case 'ADD_CATEGORY':
+      if (state.todos.categories.includes(action.payload)) {
+        return state;
+      }
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          categories: [...state.todos.categories, action.payload],
+        },
+      };
+
+    case 'DELETE_CATEGORY':
+      return {
+        ...state,
+        todos: {
+          ...state.todos,
+          categories: state.todos.categories.filter((c) => c !== action.payload),
+          // Move items from deleted category to uncategorised
+          items: state.todos.items.map((item) =>
+            item.category === action.payload ? { ...item, category: '' } : item
+          ),
+        },
       };
 
     default:
@@ -160,6 +289,36 @@ export function AppProvider({ children, notesDirectory }) {
       dispatch({ type: 'SET_PREVIEW_CONTENT', payload: null });
     }
   }, [state.selectedPath, state.flatList]);
+
+  // Track if todos have been modified (skip save on initial load)
+  const todosInitializedRef = useRef(false);
+
+  // Load todos on mount
+  useEffect(() => {
+    const { categories, items } = fsLoadTodos();
+    dispatch({ type: 'SET_TODOS', payload: { categories, items } });
+    // Mark as initialized after a tick to avoid saving on initial load
+    setTimeout(() => {
+      todosInitializedRef.current = true;
+    }, 0);
+  }, []);
+
+  // Update todo flat list when todos/expanded categories change
+  useEffect(() => {
+    const flatList = buildTodoFlatList(
+      state.todos.categories,
+      state.todos.items,
+      state.todos.expandedCategories
+    );
+    dispatch({ type: 'UPDATE_TODO_FLAT_LIST', payload: flatList });
+  }, [state.todos.categories, state.todos.items, state.todos.expandedCategories]);
+
+  // Auto-save todos when items or categories change
+  useEffect(() => {
+    if (todosInitializedRef.current) {
+      fsSaveTodos(state.todos.categories, state.todos.items);
+    }
+  }, [state.todos.categories, state.todos.items]);
 
   const logCommand = (message) => dispatch({ type: 'LOG_COMMAND', payload: message });
 
@@ -282,6 +441,103 @@ export function AppProvider({ children, notesDirectory }) {
     },
 
     loadTree,
+
+    // Tab switching
+    setActiveTab: (tab) => dispatch({ type: 'SET_ACTIVE_TAB', payload: tab }),
+
+    // Todo navigation
+    moveTodoSelection: (delta) => {
+      const { flatList, selectedIndex } = state.todos;
+      const newIndex = Math.max(0, Math.min(flatList.length - 1, selectedIndex + delta));
+      if (newIndex !== selectedIndex) {
+        dispatch({ type: 'SET_TODO_SELECTION', payload: newIndex });
+      }
+    },
+
+    selectFirstTodo: () => {
+      if (state.todos.flatList.length > 0) {
+        dispatch({ type: 'SET_TODO_SELECTION', payload: 0 });
+      }
+    },
+
+    selectLastTodo: () => {
+      if (state.todos.flatList.length > 0) {
+        dispatch({ type: 'SET_TODO_SELECTION', payload: state.todos.flatList.length - 1 });
+      }
+    },
+
+    toggleExpandCategory: (categoryName) => {
+      dispatch({ type: 'TOGGLE_TODO_CATEGORY', payload: categoryName });
+    },
+
+    setTodoScroll: (offset) => dispatch({ type: 'SET_TODO_SCROLL', payload: offset }),
+
+    // Todo CRUD
+    createTodo: ({ text, priority = 'P4', category = '', dueDate = null }) => {
+      const todo = {
+        id: generateTodoId(),
+        text,
+        completed: false,
+        priority,
+        category,
+        dueDate,
+        createdAt: new Date().toISOString(),
+      };
+      dispatch({ type: 'ADD_TODO', payload: todo });
+      logCommand(`Created todo: ${text}`);
+    },
+
+    updateTodo: (id, updates) => {
+      dispatch({ type: 'UPDATE_TODO', payload: { id, updates } });
+      logCommand(`Updated todo`);
+    },
+
+    deleteTodo: (id) => {
+      const todo = state.todos.items.find((t) => t.id === id);
+      if (todo) {
+        dispatch({ type: 'DELETE_TODO', payload: id });
+        logCommand(`Deleted todo: ${todo.text}`);
+      }
+    },
+
+    toggleTodoComplete: (id) => {
+      const todo = state.todos.items.find((t) => t.id === id);
+      if (todo) {
+        dispatch({ type: 'UPDATE_TODO', payload: { id, updates: { completed: !todo.completed } } });
+        logCommand(todo.completed ? `Uncompleted: ${todo.text}` : `Completed: ${todo.text}`);
+      }
+    },
+
+    // Category management
+    createCategory: (name) => {
+      if (name && name.trim() && name !== 'Uncategorised' && name !== 'Completed') {
+        dispatch({ type: 'ADD_CATEGORY', payload: name.trim() });
+        logCommand(`Created category: ${name}`);
+      }
+    },
+
+    deleteCategory: (name) => {
+      dispatch({ type: 'DELETE_CATEGORY', payload: name });
+      logCommand(`Deleted category: ${name}`);
+    },
+
+    // Get selected todo item
+    getSelectedTodo: () => {
+      const item = state.todos.flatList[state.todos.selectedIndex];
+      if (item?.type === 'todo') {
+        return state.todos.items.find((t) => t.id === item.id);
+      }
+      return null;
+    },
+
+    // Get selected category name
+    getSelectedCategory: () => {
+      const item = state.todos.flatList[state.todos.selectedIndex];
+      if (item?.type === 'category') {
+        return item.name;
+      }
+      return null;
+    },
   };
 
   return (
