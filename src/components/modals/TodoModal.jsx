@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Text, useInput, useStdout } from 'ink';
 import { TextInput } from '@inkjs/ui';
 
-export function TodoModal({ title, initialText = '', categories = [], onSubmit, onCancel }) {
+export function TodoModal({ title, initialText = '', categories = [], defaultCategory = '', onSubmit, onCancel }) {
   const [text, setText] = useState(initialText);
   const { stdout } = useStdout();
   const terminalHeight = stdout?.rows || 24;
@@ -47,6 +47,9 @@ export function TodoModal({ title, initialText = '', categories = [], onSubmit, 
       );
       category = existingCat || catName;
       todoText = todoText.replace(categoryMatch[0], ' ').trim();
+    } else {
+      // Use default category if none specified
+      category = defaultCategory;
     }
 
     onSubmit({
