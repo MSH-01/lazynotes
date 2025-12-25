@@ -6,8 +6,16 @@ import { TodoItem } from './TodoItem.jsx';
 
 export function TodoList({ maxHeight = 20 }) {
   const { state, actions } = useAppContext();
-  const { todos, searchFilter } = state;
+  const { todos, searchFilter, visualMode } = state;
   const { flatList, selectedIndex, expandedCategories, scrollOffset } = todos;
+
+  // Helper to check if an index is in visual selection range
+  const isInVisualRange = (index) => {
+    if (!visualMode.active) return false;
+    const start = Math.min(visualMode.startIndex, selectedIndex);
+    const end = Math.max(visualMode.startIndex, selectedIndex);
+    return index >= start && index <= end;
+  };
 
   // Filter list based on confirmed search filter (only filter todo items, not categories)
   const displayList = useMemo(() => {
@@ -62,6 +70,7 @@ export function TodoList({ maxHeight = 20 }) {
             item={item}
             isSelected={actualIndex === selectedIndex}
             isExpanded={item.type === 'category' && expandedCategories.has(item.name)}
+            isInVisualSelection={isInVisualRange(actualIndex)}
           />
         );
       })}

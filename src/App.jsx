@@ -32,7 +32,7 @@ const cli = meow(`
 function AppContent({ onOpenEditor }) {
   const { exit } = useApp();
   const { state, actions } = useAppContext();
-  const { modal, flatList, selectedIndex, todos, filteredFileList, filteredTodoList } = state;
+  const { modal, flatList, selectedIndex, todos, filteredFileList, filteredTodoList, visualMode } = state;
 
   // Use filtered lists when available
   const fileList = filteredFileList || flatList;
@@ -186,6 +186,71 @@ function AppContent({ onOpenEditor }) {
     actions.setModal(null);
   };
 
+  // Batch operation handlers
+  const getVisualSelectionItems = () => {
+    return actions.getVisualSelection();
+  };
+
+  const handleBatchDeleteFiles = () => {
+    const selection = getVisualSelectionItems();
+    const paths = selection.map(item => item.path);
+    actions.batchDeleteFiles(paths);
+    actions.exitVisualMode();
+    actions.setModal(null);
+  };
+
+  const handleBatchDeleteTodos = () => {
+    const selection = getVisualSelectionItems();
+    const ids = selection.filter(item => item.type === 'todo').map(item => item.id);
+    actions.batchDeleteTodos(ids);
+    actions.exitVisualMode();
+    actions.setModal(null);
+  };
+
+  const handleBatchSetPriority = (priority) => {
+    const selection = getVisualSelectionItems();
+    const ids = selection.filter(item => item.type === 'todo').map(item => item.id);
+    const priorityCode = priority.split(' ')[0];
+    actions.batchUpdateTodos(ids, { priority: priorityCode });
+    actions.exitVisualMode();
+    actions.setModal(null);
+  };
+
+  const handleBatchSetCategory = (category) => {
+    const selection = getVisualSelectionItems();
+    const ids = selection.filter(item => item.type === 'todo').map(item => item.id);
+    const cat = category === 'Uncategorised' ? '' : category;
+    actions.batchUpdateTodos(ids, { category: cat });
+    actions.exitVisualMode();
+    actions.setModal(null);
+  };
+
+  const handleBatchSetDueDate = (dateStr) => {
+    const dueDate = dateStr.trim() || null;
+    if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+      actions.logCommand('Invalid date format. Use YYYY-MM-DD');
+      actions.setModal(null);
+      return;
+    }
+    const selection = getVisualSelectionItems();
+    const ids = selection.filter(item => item.type === 'todo').map(item => item.id);
+    actions.batchUpdateTodos(ids, { dueDate });
+    actions.exitVisualMode();
+    actions.setModal(null);
+  };
+
+  // Get selection count for batch modals
+  const getSelectionCount = () => {
+    if (!visualMode.active) return 0;
+    const selection = getVisualSelectionItems();
+    return selection.filter(item => item.type === 'todo').length;
+  };
+
+  const getFileSelectionCount = () => {
+    if (!visualMode.active) return 0;
+    return getVisualSelectionItems().length;
+  };
+
   return (
     <Box flexDirection="column" width="100%" height="100%">
       <Layout onOpenEditor={onOpenEditor} />
@@ -300,6 +365,52 @@ function AppContent({ onOpenEditor }) {
           placeholder="YYYY-MM-DD (empty to clear)"
           initialValue={selectedTodo.dueDate || ''}
           onSubmit={handleSetDueDate}
+          onCancel={handleCancelModal}
+        />
+      )}
+
+      {/* Batch Operation Modals */}
+      {modal === 'batchDeleteFiles' && visualMode.active && (
+        <ConfirmModal
+          title="Batch Delete"
+          message={`Delete ${getFileSelectionCount()} selected items?`}
+          onConfirm={handleBatchDeleteFiles}
+          onCancel={handleCancelModal}
+        />
+      )}
+
+      {modal === 'batchDeleteTodos' && visualMode.active && (
+        <ConfirmModal
+          title="Batch Delete Todos"
+          message={`Delete ${getSelectionCount()} selected todos?`}
+          onConfirm={handleBatchDeleteTodos}
+          onCancel={handleCancelModal}
+        />
+      )}
+
+      {modal === 'batchSetPriority' && visualMode.active && (
+        <SelectModal
+          title={`Set Priority (${getSelectionCount()} items)`}
+          options={['P1 (Urgent)', 'P2 (High)', 'P3 (Medium)', 'P4 (Low)']}
+          onSelect={handleBatchSetPriority}
+          onCancel={handleCancelModal}
+        />
+      )}
+
+      {modal === 'batchSetCategory' && visualMode.active && (
+        <SelectModal
+          title={`Set Category (${getSelectionCount()} items)`}
+          options={['Uncategorised', ...todos.categories]}
+          onSelect={handleBatchSetCategory}
+          onCancel={handleCancelModal}
+        />
+      )}
+
+      {modal === 'batchSetDueDate' && visualMode.active && (
+        <InputModal
+          title={`Set Due Date (${getSelectionCount()} items)`}
+          placeholder="YYYY-MM-DD (empty to clear)"
+          onSubmit={handleBatchSetDueDate}
           onCancel={handleCancelModal}
         />
       )}

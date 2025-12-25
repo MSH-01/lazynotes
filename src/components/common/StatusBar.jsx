@@ -6,14 +6,19 @@ import { useAppContext } from '../../context/AppContext.jsx';
 const HINTS = {
   preview: 'j/k:scroll  g/G:top/bottom  e:edit  /:search  q:quit',
   status: '0:preview  2:files  3:info  /:search  q:quit',
-  fileTree: 'j/k:nav  e:edit  n:new  N:dir  r:rename  d:del  []:tab  /:search  q:quit',
-  todos: 'j/k:nav  x:toggle  n:new  N:cat  p:priority  c:move  u:due  d:del  []:tab  /:search  q:quit',
+  fileTree: 'j/k:nav  v:visual  e:edit  n:new  N:dir  r:rename  d:del  []:tab  /:search  q:quit',
+  todos: 'j/k:nav  v:visual  x:toggle  n:new  N:cat  p:priority  c:move  u:due  d:del  []:tab  /:search  q:quit',
   metadata: '0:preview  1:status  2:files  /:search  q:quit',
+};
+
+const VISUAL_HINTS = {
+  fileTree: 'j/k:extend  d:delete  Esc:cancel',
+  todos: 'j/k:extend  x:toggle  d:delete  p:priority  c:cat  u:due  Esc:cancel',
 };
 
 export function StatusBar() {
   const { state, actions } = useAppContext();
-  const { focusedPanel, modal, activeTab, isSearching, searchFilter } = state;
+  const { focusedPanel, modal, activeTab, isSearching, searchFilter, visualMode } = state;
 
   // Local state for input to avoid global re-renders while typing
   const [inputValue, setInputValue] = useState('');
@@ -87,6 +92,9 @@ export function StatusBar() {
   let hint;
   if (modal) {
     hint = 'Enter:confirm  Escape:cancel';
+  } else if (visualMode.active && focusedPanel === 'fileTree') {
+    // Visual mode hints
+    hint = activeTab === 'todos' ? VISUAL_HINTS.todos : VISUAL_HINTS.fileTree;
   } else if (focusedPanel === 'fileTree') {
     hint = activeTab === 'todos' ? HINTS.todos : HINTS.fileTree;
   } else {
