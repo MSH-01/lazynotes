@@ -1,25 +1,28 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 
-const ICONS = {
-  file: ' ',
-  directory: ' ',
-  directoryOpen: ' ',
-};
+// Unicode arrows for expand/collapse
+const ARROW_RIGHT = '▶';  // Collapsed
+const ARROW_DOWN = '▼';   // Expanded
+
+// File icon
+const FILE_ICON = ' ';
 
 export function FileTreeItem({ item, isSelected, isExpanded }) {
   const indent = '  '.repeat(item.depth);
-  const icon = item.type === 'directory'
-    ? (isExpanded ? ICONS.directoryOpen : ICONS.directory)
-    : ICONS.file;
 
-  const bgColor = isSelected ? 'cyan' : undefined;
-  const textColor = isSelected ? 'black' : (item.type === 'directory' ? 'blue' : 'white');
+  // For directories: show arrow, for files: show file icon with spacing to align
+  const prefix = item.type === 'directory'
+    ? (isExpanded ? ARROW_DOWN : ARROW_RIGHT)
+    : FILE_ICON;
+
+  const bgColor = isSelected ? 'blue' : undefined;
+  const textColor = isSelected ? 'white' : (item.type === 'directory' ? 'cyan' : 'white');
 
   return (
     <Box>
       <Text backgroundColor={bgColor} color={textColor}>
-        {indent}{icon} {item.name}
+        {indent}{prefix} {item.name}
       </Text>
     </Box>
   );

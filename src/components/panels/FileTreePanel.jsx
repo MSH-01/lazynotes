@@ -56,7 +56,7 @@ export function FileTreePanel({ maxHeight = 15 }) {
   }, [selectedIndex, state.fileTreeScrollOffset, maxHeight, actions]);
 
   return (
-    <Panel title="Files [0]" isFocused={isFocused} flexGrow={1}>
+    <Panel title="[0] Files" isFocused={isFocused} flexGrow={1}>
       <FileTree maxHeight={maxHeight} />
     </Panel>
   );
