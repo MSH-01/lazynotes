@@ -114,3 +114,16 @@ export function isDirectory(filePath) {
 export function writeFileContent(filePath, content) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
+
+export function getFileStats(filePath) {
+  try {
+    const stats = fs.statSync(filePath);
+    return {
+      size: stats.size,
+      modifiedAt: stats.mtime,
+      createdAt: stats.birthtime,
+    };
+  } catch {
+    return null;
+  }
+}

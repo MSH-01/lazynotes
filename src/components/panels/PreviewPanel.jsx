@@ -18,7 +18,7 @@ const CREDITS = `
   │   0-4    Switch panels              │
   │   j/k    Navigate / Scroll          │
   │   Enter  Expand/collapse folders    │
-  │   e      Edit file                  │
+  │   e      Edit file in $EDITOR       │
   │   n      New file                   │
   │   N      New directory              │
   │   r      Rename                     │
@@ -29,7 +29,7 @@ const CREDITS = `
   ╰─────────────────────────────────────╯
 `;
 
-export function PreviewPanel({ maxHeight = 20 }) {
+export function PreviewPanel({ maxHeight = 20, onOpenEditor }) {
   const { state, actions } = useAppContext();
   const {
     focusedPanel,
@@ -39,10 +39,6 @@ export function PreviewPanel({ maxHeight = 20 }) {
     flatList,
     selectedPath,
     modal,
-    editMode,
-    editContent,
-    cursorLine,
-    cursorCol,
   } = state;
 
   const isFocused = focusedPanel === 'preview';
@@ -54,117 +50,20 @@ export function PreviewPanel({ maxHeight = 20 }) {
 
   // Handle keyboard input
   useInput((input, key) => {
-    if (modal) return;
+    if (modal || !isFocused) return;
 
-    // Edit mode input handling
-    if (editMode && isFocused) {
-      const lines = (editContent || '').split('\n');
-
-      // Save with Ctrl+S
-      if (key.ctrl && input === 's') {
-        actions.saveFile();
-        return;
+    // Open in external editor with 'e'
+    if (input === 'e' && isFile && selectedItem) {
+      if (onOpenEditor) {
+        onOpenEditor(selectedItem.path);
+        // After editor closes, reload content and file tree
+        actions.reloadPreview();
+        actions.loadTree();
       }
-
-      // Cancel with Escape
-      if (key.escape) {
-        actions.exitEditMode();
-        actions.logCommand('Edit cancelled');
-        return;
-      }
-
-      // Arrow key navigation
-      if (key.upArrow) {
-        const newLine = Math.max(0, cursorLine - 1);
-        const newCol = Math.min(cursorCol, lines[newLine]?.length || 0);
-        actions.setCursor(newLine, newCol);
-        return;
-      }
-      if (key.downArrow) {
-        const newLine = Math.min(lines.length - 1, cursorLine + 1);
-        const newCol = Math.min(cursorCol, lines[newLine]?.length || 0);
-        actions.setCursor(newLine, newCol);
-        return;
-      }
-      if (key.leftArrow) {
-        if (cursorCol > 0) {
-          actions.setCursor(cursorLine, cursorCol - 1);
-        } else if (cursorLine > 0) {
-          actions.setCursor(cursorLine - 1, lines[cursorLine - 1]?.length || 0);
-        }
-        return;
-      }
-      if (key.rightArrow) {
-        const lineLen = lines[cursorLine]?.length || 0;
-        if (cursorCol < lineLen) {
-          actions.setCursor(cursorLine, cursorCol + 1);
-        } else if (cursorLine < lines.length - 1) {
-          actions.setCursor(cursorLine + 1, 0);
-        }
-        return;
-      }
-
-      // Backspace
-      if (key.backspace || key.delete) {
-        if (cursorCol > 0) {
-          const line = lines[cursorLine];
-          lines[cursorLine] = line.slice(0, cursorCol - 1) + line.slice(cursorCol);
-          actions.setEditContent(lines.join('\n'));
-          actions.setCursor(cursorLine, cursorCol - 1);
-        } else if (cursorLine > 0) {
-          const prevLineLen = lines[cursorLine - 1].length;
-          lines[cursorLine - 1] += lines[cursorLine];
-          lines.splice(cursorLine, 1);
-          actions.setEditContent(lines.join('\n'));
-          actions.setCursor(cursorLine - 1, prevLineLen);
-        }
-        return;
-      }
-
-      // Enter - new line
-      if (key.return) {
-        const line = lines[cursorLine];
-        const before = line.slice(0, cursorCol);
-        const after = line.slice(cursorCol);
-        lines[cursorLine] = before;
-        lines.splice(cursorLine + 1, 0, after);
-        actions.setEditContent(lines.join('\n'));
-        actions.setCursor(cursorLine + 1, 0);
-        return;
-      }
-
-      // Tab
-      if (key.tab) {
-        const line = lines[cursorLine];
-        lines[cursorLine] = line.slice(0, cursorCol) + '  ' + line.slice(cursorCol);
-        actions.setEditContent(lines.join('\n'));
-        actions.setCursor(cursorLine, cursorCol + 2);
-        return;
-      }
-
-      // Regular character input
-      if (input && !key.ctrl && !key.meta) {
-        const line = lines[cursorLine] || '';
-        lines[cursorLine] = line.slice(0, cursorCol) + input + line.slice(cursorCol);
-        actions.setEditContent(lines.join('\n'));
-        actions.setCursor(cursorLine, cursorCol + input.length);
-        return;
-      }
-
       return;
     }
 
-    // Normal mode (not editing)
-    if (!isFocused) return;
-
-    // Enter edit mode with 'e'
-    if (input === 'e' && isFile && previewContent !== null) {
-      actions.enterEditMode();
-      actions.logCommand('Entered edit mode');
-      return;
-    }
-
-    // Scrolling in view mode
+    // Scrolling
     if (!previewContent) return;
 
     const lines = previewContent.split('\n');
@@ -183,18 +82,7 @@ export function PreviewPanel({ maxHeight = 20 }) {
     } else if (key.ctrl && input === 'u') {
       actions.setPreviewScroll(Math.max(previewScrollOffset - Math.floor(maxHeight / 2), 0));
     }
-  }, { isActive: isFocused || editMode });
-
-  // Auto-scroll to keep cursor visible in edit mode
-  React.useEffect(() => {
-    if (editMode) {
-      if (cursorLine < previewScrollOffset) {
-        actions.setPreviewScroll(cursorLine);
-      } else if (cursorLine >= previewScrollOffset + maxHeight - 1) {
-        actions.setPreviewScroll(cursorLine - maxHeight + 2);
-      }
-    }
-  }, [cursorLine, editMode, previewScrollOffset, maxHeight, actions]);
+  }, { isActive: isFocused });
 
   const renderContent = () => {
     // Show credits when status panel is focused
@@ -216,45 +104,6 @@ export function PreviewPanel({ maxHeight = 20 }) {
       return <Text color="gray">Select a file to preview</Text>;
     }
 
-    // Edit mode rendering
-    if (editMode && editContent !== null) {
-      const lines = editContent.split('\n');
-      const visibleLines = lines.slice(previewScrollOffset, previewScrollOffset + maxHeight - 1);
-
-      return (
-        <Box flexDirection="column">
-          {visibleLines.map((line, i) => {
-            const lineNum = previewScrollOffset + i;
-            const isCurrentLine = lineNum === cursorLine;
-
-            if (isCurrentLine) {
-              // Render line with cursor
-              const before = line.slice(0, cursorCol);
-              const cursor = line[cursorCol] || ' ';
-              const after = line.slice(cursorCol + 1);
-
-              return (
-                <Text key={lineNum} wrap="truncate-end">
-                  <Text dimColor>{String(lineNum + 1).padStart(3)} </Text>
-                  <Text>{before}</Text>
-                  <Text inverse>{cursor}</Text>
-                  <Text>{after}</Text>
-                </Text>
-              );
-            }
-
-            return (
-              <Text key={lineNum} wrap="truncate-end">
-                <Text dimColor>{String(lineNum + 1).padStart(3)} </Text>
-                <Text>{line || ' '}</Text>
-              </Text>
-            );
-          })}
-        </Box>
-      );
-    }
-
-    // Normal view mode
     if (!previewContent) {
       return <Text color="gray">No content to display</Text>;
     }
@@ -283,14 +132,12 @@ export function PreviewPanel({ maxHeight = 20 }) {
   let title = '[0] Preview';
   if (showCredits) {
     title = '[0] Preview - Credits';
-  } else if (editMode) {
-    title = `[0] Preview - EDITING: ${selectedItem?.name} (Ctrl+S save, Esc cancel)`;
   } else if (selectedItem) {
     title = `[0] Preview - ${selectedItem.name}${isFile ? ' (e to edit)' : ''}`;
   }
 
   return (
-    <Panel title={title} isFocused={isFocused || editMode} flexGrow={1}>
+    <Panel title={title} isFocused={isFocused} flexGrow={1}>
       {renderContent()}
     </Panel>
   );

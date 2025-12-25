@@ -27,20 +27,15 @@ const cli = meow(`
   },
 });
 
-function AppContent() {
+function AppContent({ onOpenEditor }) {
   const { exit } = useApp();
   const { state, actions } = useAppContext();
   const { modal, flatList, selectedIndex } = state;
 
   const selectedItem = flatList[selectedIndex];
 
-  const { editMode } = state;
-
   // Global keyboard shortcuts
   useInput((input, key) => {
-    // Don't handle global shortcuts in edit mode
-    if (editMode) return;
-
     // Quit
     if (input === 'q' && !modal) {
       exit();
@@ -84,7 +79,7 @@ function AppContent() {
 
   return (
     <Box flexDirection="column" width="100%" height="100%">
-      <Layout />
+      <Layout onOpenEditor={onOpenEditor} />
 
       {/* Modals */}
       {modal === 'create' && (
@@ -127,7 +122,7 @@ function AppContent() {
   );
 }
 
-export function App() {
+export function App({ onOpenEditor }) {
   const { config, error, isLoading } = useConfig(cli.flags);
 
   if (isLoading) {
@@ -148,7 +143,7 @@ export function App() {
 
   return (
     <AppProvider notesDirectory={config.notesDirectory}>
-      <AppContent />
+      <AppContent onOpenEditor={onOpenEditor} />
     </AppProvider>
   );
 }

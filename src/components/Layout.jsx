@@ -7,7 +7,7 @@ import { PreviewPanel } from './panels/PreviewPanel.jsx';
 import { CommandLogPanel } from './panels/CommandLogPanel.jsx';
 import { StatusBar } from './common/StatusBar.jsx';
 
-export function Layout() {
+export function Layout({ onOpenEditor }) {
   const { stdout } = useStdout();
   const terminalHeight = stdout?.rows || 24;
   const terminalWidth = stdout?.columns || 80;
@@ -25,13 +25,13 @@ export function Layout() {
         {/* Left panel: 1/3 width, split into Status, FileTree, and Metadata */}
         <Box flexDirection="column" width="33%">
           <StatusPanel />
-          <FileTreePanel maxHeight={leftPanelFileTreeHeight - 12} />
+          <FileTreePanel maxHeight={leftPanelFileTreeHeight - 12} onOpenEditor={onOpenEditor} />
           <MetadataPanel />
         </Box>
 
         {/* Right panel: 2/3 width, Preview + Command Log */}
         <Box flexDirection="column" width="67%">
-          <PreviewPanel maxHeight={rightPanelPreviewHeight - 4} />
+          <PreviewPanel maxHeight={rightPanelPreviewHeight - 4} onOpenEditor={onOpenEditor} />
           <CommandLogPanel maxHeight={4} />
         </Box>
       </Box>

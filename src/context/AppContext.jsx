@@ -7,7 +7,6 @@ import {
   renameItem as fsRenameItem,
   deleteItem as fsDeleteItem,
   readFileContent,
-  writeFileContent,
 } from '../utils/fs.js';
 
 const AppContext = createContext(null);
@@ -37,12 +36,6 @@ const initialState = {
 
   // Command log
   commandLog: [],
-
-  // Edit mode
-  editMode: false,
-  editContent: null,
-  cursorLine: 0,
-  cursorCol: 0,
 };
 
 function appReducer(state, action) {
@@ -100,34 +93,6 @@ function appReducer(state, action) {
       return {
         ...state,
         commandLog: [...state.commandLog, { message: action.payload, timestamp: new Date() }].slice(-50),
-      };
-
-    case 'ENTER_EDIT_MODE':
-      return {
-        ...state,
-        editMode: true,
-        editContent: action.payload,
-        cursorLine: 0,
-        cursorCol: 0,
-      };
-
-    case 'EXIT_EDIT_MODE':
-      return {
-        ...state,
-        editMode: false,
-        editContent: null,
-        cursorLine: 0,
-        cursorCol: 0,
-      };
-
-    case 'SET_EDIT_CONTENT':
-      return { ...state, editContent: action.payload };
-
-    case 'SET_CURSOR':
-      return {
-        ...state,
-        cursorLine: action.payload.line,
-        cursorCol: action.payload.col,
       };
 
     default:
@@ -307,35 +272,12 @@ export function AppProvider({ children, notesDirectory }) {
       }
     },
 
-    // Edit mode actions
-    enterEditMode: () => {
-      if (state.previewContent !== null) {
-        dispatch({ type: 'ENTER_EDIT_MODE', payload: state.previewContent });
-      }
-    },
-
-    exitEditMode: () => {
-      dispatch({ type: 'EXIT_EDIT_MODE' });
-    },
-
-    setEditContent: (content) => {
-      dispatch({ type: 'SET_EDIT_CONTENT', payload: content });
-    },
-
-    setCursor: (line, col) => {
-      dispatch({ type: 'SET_CURSOR', payload: { line, col } });
-    },
-
-    saveFile: () => {
-      const item = state.flatList[state.selectedIndex];
-      if (!item || item.type !== 'file' || state.editContent === null) return;
-      try {
-        writeFileContent(item.path, state.editContent);
-        dispatch({ type: 'SET_PREVIEW_CONTENT', payload: state.editContent });
-        dispatch({ type: 'EXIT_EDIT_MODE' });
-        logCommand(`Saved: ${item.name}`);
-      } catch (err) {
-        logCommand(`Error saving: ${err.message}`);
+    // Reload preview content (after external edit)
+    reloadPreview: () => {
+      const selectedItem = state.flatList.find(item => item.path === state.selectedPath);
+      if (selectedItem && selectedItem.type === 'file') {
+        const content = readFileContent(selectedItem.path);
+        dispatch({ type: 'SET_PREVIEW_CONTENT', payload: content });
       }
     },
 
