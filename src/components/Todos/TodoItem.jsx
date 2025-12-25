@@ -14,7 +14,7 @@ const PRIORITY_COLORS = {
   P4: 'gray',
 };
 
-export function TodoItem({ item, isSelected, isExpanded }) {
+export function TodoItem({ item, isSelected, isExpanded, isInVisualSelection }) {
   const indent = '  '.repeat(item.depth);
 
   // Category row
@@ -26,6 +26,11 @@ export function TodoItem({ item, isSelected, isExpanded }) {
 
     if (isSelected) {
       return <Text inverse bold wrap="truncate-end">{paddedContent}</Text>;
+    }
+
+    // Visual selection (but not cursor)
+    if (isInVisualSelection) {
+      return <Text backgroundColor="blue" color="white" wrap="truncate-end">{paddedContent}</Text>;
     }
 
     return (
@@ -60,6 +65,11 @@ export function TodoItem({ item, isSelected, isExpanded }) {
       return <Text inverse bold wrap="truncate-end">{paddedContent}</Text>;
     }
 
+    // Visual selection (but not cursor)
+    if (isInVisualSelection) {
+      return <Text backgroundColor="blue" color="white" wrap="truncate-end">{paddedContent}</Text>;
+    }
+
     return (
       <Text dimColor wrap="truncate-end">
         {content}
@@ -73,6 +83,11 @@ export function TodoItem({ item, isSelected, isExpanded }) {
 
   if (isSelected) {
     return <Text inverse bold wrap="truncate-end">{paddedContent}</Text>;
+  }
+
+  // Visual selection (but not cursor)
+  if (isInVisualSelection) {
+    return <Text backgroundColor="blue" color="white" wrap="truncate-end">{paddedContent}</Text>;
   }
 
   // Non-selected: color by priority, due date colored separately

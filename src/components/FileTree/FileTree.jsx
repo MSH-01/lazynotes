@@ -6,7 +6,15 @@ import { FileTreeItem } from './FileTreeItem.jsx';
 
 export function FileTree({ maxHeight = 20 }) {
   const { state, actions } = useAppContext();
-  const { flatList, selectedIndex, expandedDirs, fileTreeScrollOffset, searchFilter } = state;
+  const { flatList, selectedIndex, expandedDirs, fileTreeScrollOffset, searchFilter, visualMode } = state;
+
+  // Helper to check if an index is in visual selection range
+  const isInVisualRange = (index) => {
+    if (!visualMode.active) return false;
+    const start = Math.min(visualMode.startIndex, selectedIndex);
+    const end = Math.max(visualMode.startIndex, selectedIndex);
+    return index >= start && index <= end;
+  };
 
   // Filter list based on confirmed search filter
   const displayList = useMemo(() => {
@@ -56,6 +64,7 @@ export function FileTree({ maxHeight = 20 }) {
             item={item}
             isSelected={actualIndex === selectedIndex}
             isExpanded={expandedDirs.has(item.path)}
+            isInVisualSelection={isInVisualRange(actualIndex)}
           />
         );
       })}

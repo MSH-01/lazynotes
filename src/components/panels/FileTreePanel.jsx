@@ -7,7 +7,7 @@ import { useAppContext } from '../../context/AppContext.jsx';
 
 export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
   const { state, actions } = useAppContext();
-  const { focusedPanel, flatList, selectedIndex, modal, activeTab, todos, isSearching, filteredFileList, filteredTodoList } = state;
+  const { focusedPanel, flatList, selectedIndex, modal, activeTab, todos, isSearching, filteredFileList, filteredTodoList, visualMode } = state;
   const isFocused = focusedPanel === 'fileTree';
 
   // Get the correct list based on filter state
@@ -18,9 +18,25 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
   useInput((input, key) => {
     if (!isFocused || modal || isSearching) return;
 
+    // Exit visual mode with Escape
+    if (key.escape && visualMode.active) {
+      actions.exitVisualMode();
+      return;
+    }
+
     // Tab switching with [ and ]
     if (input === '[' || input === ']') {
       actions.setActiveTab(activeTab === 'files' ? 'todos' : 'files');
+      return;
+    }
+
+    // Toggle visual mode with v
+    if (input === 'v') {
+      if (visualMode.active) {
+        actions.exitVisualMode();
+      } else {
+        actions.enterVisualMode();
+      }
       return;
     }
 
@@ -69,7 +85,11 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
       } else if (input === 'r') {
         actions.setModal('rename');
       } else if (input === 'd') {
-        actions.setModal('delete');
+        if (visualMode.active) {
+          actions.setModal('batchDeleteFiles');
+        } else {
+          actions.setModal('delete');
+        }
       }
     }
     // TODOS TAB
@@ -108,7 +128,15 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
 
       // Toggle completion with x or space
       else if (input === 'x' || input === ' ') {
-        if (selectedItem?.type === 'todo') {
+        if (visualMode.active) {
+          // Batch toggle in visual mode
+          const selection = actions.getVisualSelection();
+          const todoIds = selection.filter(item => item.type === 'todo').map(item => item.id);
+          if (todoIds.length > 0) {
+            actions.batchToggleTodoComplete(todoIds);
+            actions.exitVisualMode();
+          }
+        } else if (selectedItem?.type === 'todo') {
           actions.toggleTodoComplete(selectedItem.id);
         }
       }
@@ -123,7 +151,9 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
           actions.setModal('editTodo');
         }
       } else if (input === 'd') {
-        if (selectedItem?.type === 'todo') {
+        if (visualMode.active) {
+          actions.setModal('batchDeleteTodos');
+        } else if (selectedItem?.type === 'todo') {
           actions.setModal('deleteTodo');
         } else if (selectedItem?.type === 'category' &&
                    selectedItem.name !== 'Uncategorised' &&
@@ -131,15 +161,21 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
           actions.setModal('deleteCategory');
         }
       } else if (input === 'p') {
-        if (selectedItem?.type === 'todo') {
+        if (visualMode.active) {
+          actions.setModal('batchSetPriority');
+        } else if (selectedItem?.type === 'todo') {
           actions.setModal('setPriority');
         }
       } else if (input === 'c') {
-        if (selectedItem?.type === 'todo') {
+        if (visualMode.active) {
+          actions.setModal('batchSetCategory');
+        } else if (selectedItem?.type === 'todo') {
           actions.setModal('setCategory');
         }
       } else if (input === 'u') {
-        if (selectedItem?.type === 'todo') {
+        if (visualMode.active) {
+          actions.setModal('batchSetDueDate');
+        } else if (selectedItem?.type === 'todo') {
           actions.setModal('setDueDate');
         }
       }

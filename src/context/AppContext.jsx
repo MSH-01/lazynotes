@@ -33,6 +33,12 @@ const initialState = {
   modal: null,
   activeTab: 'files', // 'files' | 'todos'
 
+  // Visual mode state (for batch operations)
+  visualMode: {
+    active: false,
+    startIndex: null, // Index where visual selection started
+  },
+
   // Search state
   isSearching: false,
   searchQuery: '',
@@ -96,7 +102,12 @@ function appReducer(state, action) {
       return { ...state, flatList: action.payload };
 
     case 'SET_FOCUSED_PANEL':
-      return { ...state, focusedPanel: action.payload };
+      // Exit visual mode when switching panels
+      return {
+        ...state,
+        focusedPanel: action.payload,
+        visualMode: { active: false, startIndex: null },
+      };
 
     case 'SET_MODAL':
       return { ...state, modal: action.payload };
@@ -123,7 +134,28 @@ function appReducer(state, action) {
 
     // Tab switching
     case 'SET_ACTIVE_TAB':
-      return { ...state, activeTab: action.payload };
+      // Exit visual mode when switching tabs
+      return {
+        ...state,
+        activeTab: action.payload,
+        visualMode: { active: false, startIndex: null },
+      };
+
+    // Visual mode
+    case 'ENTER_VISUAL_MODE':
+      return {
+        ...state,
+        visualMode: {
+          active: true,
+          startIndex: action.payload, // Current index when entering visual mode
+        },
+      };
+
+    case 'EXIT_VISUAL_MODE':
+      return {
+        ...state,
+        visualMode: { active: false, startIndex: null },
+      };
 
     // Search
     case 'START_SEARCH':
@@ -510,6 +542,33 @@ export function AppProvider({ children, notesDirectory }) {
     setFilteredFileList: (list) => dispatch({ type: 'SET_FILTERED_FILE_LIST', payload: list }),
     setFilteredTodoList: (list) => dispatch({ type: 'SET_FILTERED_TODO_LIST', payload: list }),
 
+    // Visual mode
+    enterVisualMode: () => {
+      // Use the appropriate selectedIndex based on active tab
+      const startIndex = state.activeTab === 'todos'
+        ? state.todos.selectedIndex
+        : state.selectedIndex;
+      dispatch({ type: 'ENTER_VISUAL_MODE', payload: startIndex });
+    },
+    exitVisualMode: () => dispatch({ type: 'EXIT_VISUAL_MODE' }),
+
+    // Get items in visual selection range (for batch operations)
+    getVisualSelection: () => {
+      if (!state.visualMode.active) return [];
+
+      if (state.activeTab === 'todos') {
+        const list = state.filteredTodoList || state.todos.flatList;
+        const start = Math.min(state.visualMode.startIndex, state.todos.selectedIndex);
+        const end = Math.max(state.visualMode.startIndex, state.todos.selectedIndex);
+        return list.slice(start, end + 1);
+      } else {
+        const list = state.filteredFileList || state.flatList;
+        const start = Math.min(state.visualMode.startIndex, state.selectedIndex);
+        const end = Math.max(state.visualMode.startIndex, state.selectedIndex);
+        return list.slice(start, end + 1);
+      }
+    },
+
     // Todo navigation
     moveTodoSelection: (delta) => {
       const { selectedIndex } = state.todos;
@@ -574,6 +633,43 @@ export function AppProvider({ children, notesDirectory }) {
         dispatch({ type: 'UPDATE_TODO', payload: { id, updates: { completed: !todo.completed } } });
         logCommand(todo.completed ? `Uncompleted: ${todo.text}` : `Completed: ${todo.text}`);
       }
+    },
+
+    // Batch operations for visual mode
+    batchToggleTodoComplete: (ids) => {
+      for (const id of ids) {
+        const todo = state.todos.items.find((t) => t.id === id);
+        if (todo) {
+          dispatch({ type: 'UPDATE_TODO', payload: { id, updates: { completed: !todo.completed } } });
+        }
+      }
+      logCommand(`Toggled ${ids.length} todos`);
+    },
+
+    batchDeleteTodos: (ids) => {
+      for (const id of ids) {
+        dispatch({ type: 'DELETE_TODO', payload: id });
+      }
+      logCommand(`Deleted ${ids.length} todos`);
+    },
+
+    batchUpdateTodos: (ids, updates) => {
+      for (const id of ids) {
+        dispatch({ type: 'UPDATE_TODO', payload: { id, updates } });
+      }
+      logCommand(`Updated ${ids.length} todos`);
+    },
+
+    batchDeleteFiles: (paths) => {
+      for (const path of paths) {
+        try {
+          fsDeleteItem(path);
+        } catch (err) {
+          logCommand(`Error deleting ${path}: ${err.message}`);
+        }
+      }
+      logCommand(`Deleted ${paths.length} items`);
+      loadTree();
     },
 
     // Category management
