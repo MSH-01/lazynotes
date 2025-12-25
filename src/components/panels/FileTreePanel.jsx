@@ -7,12 +7,16 @@ import { useAppContext } from '../../context/AppContext.jsx';
 
 export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
   const { state, actions } = useAppContext();
-  const { focusedPanel, flatList, selectedIndex, modal, activeTab, todos } = state;
+  const { focusedPanel, flatList, selectedIndex, modal, activeTab, todos, isSearching, filteredFileList, filteredTodoList } = state;
   const isFocused = focusedPanel === 'fileTree';
+
+  // Get the correct list based on filter state
+  const fileList = filteredFileList || flatList;
+  const todoList = filteredTodoList || todos.flatList;
 
   // Handle keyboard input when focused
   useInput((input, key) => {
-    if (!isFocused || modal) return;
+    if (!isFocused || modal || isSearching) return;
 
     // Tab switching with [ and ]
     if (input === '[' || input === ']') {
@@ -35,7 +39,7 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
 
       // Expand/collapse toggle or open file
       else if (key.return || input === 'l' || key.rightArrow) {
-        const selectedItem = flatList[selectedIndex];
+        const selectedItem = fileList[selectedIndex];
         if (selectedItem?.type === 'directory') {
           actions.toggleExpandSelected();
         } else if (selectedItem?.type === 'file') {
@@ -48,7 +52,7 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
 
       // Open in external editor with 'e'
       else if (input === 'e') {
-        const selectedItem = flatList[selectedIndex];
+        const selectedItem = fileList[selectedIndex];
         if (selectedItem?.type === 'file' && onOpenEditor) {
           onOpenEditor(selectedItem.path);
           // After editor closes, reload content and file tree
@@ -70,7 +74,7 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
     }
     // TODOS TAB
     else {
-      const selectedItem = todos.flatList[todos.selectedIndex];
+      const selectedItem = todoList[todos.selectedIndex];
 
       // Navigation
       if (input === 'j' || key.downArrow) {
@@ -92,9 +96,9 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
         if (selectedItem?.type === 'category' && todos.expandedCategories.has(selectedItem.name)) {
           actions.toggleExpandCategory(selectedItem.name);
         } else if (selectedItem?.type === 'todo') {
-          // Find parent category and jump to it
+          // Find parent category and jump to it (only works in unfiltered mode)
           for (let i = todos.selectedIndex - 1; i >= 0; i--) {
-            if (todos.flatList[i]?.type === 'category') {
+            if (todoList[i]?.type === 'category') {
               actions.moveTodoSelection(i - todos.selectedIndex);
               break;
             }
@@ -169,7 +173,7 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
     <>
       <Text>[2] </Text>
       <Text bold={activeTab === 'files'}>
-        Files
+        Notes
       </Text>
       <Text> - </Text>
       <Text bold={activeTab === 'todos'}>

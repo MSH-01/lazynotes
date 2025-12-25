@@ -37,20 +37,23 @@ export function PreviewPanel({ maxHeight = 20, onOpenEditor }) {
     previewError,
     previewScrollOffset,
     flatList,
-    selectedPath,
+    selectedIndex,
+    filteredFileList,
     modal,
+    isSearching,
   } = state;
 
   const isFocused = focusedPanel === 'preview';
   const showCredits = focusedPanel === 'status';
 
-  const selectedItem = flatList.find(item => item.path === selectedPath);
+  const fileList = filteredFileList || flatList;
+  const selectedItem = fileList[selectedIndex];
   const isDirectory = selectedItem?.type === 'directory';
   const isFile = selectedItem?.type === 'file';
 
   // Handle keyboard input
   useInput((input, key) => {
-    if (modal || !isFocused) return;
+    if (modal || !isFocused || isSearching) return;
 
     // Open in external editor with 'e'
     if (input === 'e' && isFile && selectedItem) {

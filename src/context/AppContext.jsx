@@ -33,6 +33,13 @@ const initialState = {
   modal: null,
   activeTab: 'files', // 'files' | 'todos'
 
+  // Search state
+  isSearching: false,
+  searchQuery: '',
+  searchFilter: '', // Only set when Enter is pressed
+  filteredFileList: null, // null means no filter active, use flatList
+  filteredTodoList: null,
+
   // Preview state
   previewContent: null,
   previewError: null,
@@ -95,6 +102,8 @@ function appReducer(state, action) {
       return { ...state, modal: action.payload };
 
     case 'SET_PREVIEW_CONTENT':
+      // Avoid unnecessary re-renders when content hasn't changed
+      if (state.previewContent === action.payload && state.previewError === null) return state;
       return { ...state, previewContent: action.payload, previewError: null };
 
     case 'SET_PREVIEW_ERROR':
@@ -115,6 +124,48 @@ function appReducer(state, action) {
     // Tab switching
     case 'SET_ACTIVE_TAB':
       return { ...state, activeTab: action.payload };
+
+    // Search
+    case 'START_SEARCH':
+      return { ...state, isSearching: true, searchQuery: '', searchFilter: '' };
+
+    case 'SET_SEARCH_QUERY':
+      return { ...state, searchQuery: action.payload };
+
+    case 'CONFIRM_SEARCH':
+      return {
+        ...state,
+        isSearching: false,
+        searchFilter: state.searchQuery,
+        // Reset selection to first item when filter is confirmed
+        selectedIndex: 0,
+        fileTreeScrollOffset: 0,
+        todos: {
+          ...state.todos,
+          selectedIndex: 0,
+          scrollOffset: 0,
+        },
+      };
+
+    case 'CLEAR_SEARCH':
+      return {
+        ...state,
+        isSearching: false,
+        searchQuery: '',
+        searchFilter: '',
+        filteredFileList: null,
+        filteredTodoList: null,
+      };
+
+    case 'SET_FILTERED_FILE_LIST':
+      // Avoid unnecessary re-renders when setting to same value
+      if (action.payload === null && state.filteredFileList === null) return state;
+      return { ...state, filteredFileList: action.payload };
+
+    case 'SET_FILTERED_TODO_LIST':
+      // Avoid unnecessary re-renders when setting to same value
+      if (action.payload === null && state.filteredTodoList === null) return state;
+      return { ...state, filteredTodoList: action.payload };
 
     // Todos
     case 'SET_TODOS':
@@ -277,18 +328,15 @@ export function AppProvider({ children, notesDirectory }) {
 
   // Load preview content when selection changes
   useEffect(() => {
-    if (!state.selectedPath) {
-      dispatch({ type: 'SET_PREVIEW_CONTENT', payload: null });
-      return;
-    }
-    const selectedItem = state.flatList.find(item => item.path === state.selectedPath);
+    const list = state.filteredFileList || state.flatList;
+    const selectedItem = list[state.selectedIndex];
     if (selectedItem && selectedItem.type === 'file') {
       const content = readFileContent(selectedItem.path);
       dispatch({ type: 'SET_PREVIEW_CONTENT', payload: content });
     } else {
       dispatch({ type: 'SET_PREVIEW_CONTENT', payload: null });
     }
-  }, [state.selectedPath, state.flatList]);
+  }, [state.selectedIndex, state.flatList, state.filteredFileList]);
 
   // Track if todos have been modified (skip save on initial load)
   const todosInitializedRef = useRef(false);
@@ -330,42 +378,46 @@ export function AppProvider({ children, notesDirectory }) {
     logCommand,
 
     moveSelection: (delta) => {
-      const newIndex = Math.max(0, Math.min(state.flatList.length - 1, state.selectedIndex + delta));
-      if (newIndex !== state.selectedIndex && state.flatList[newIndex]) {
-        dispatch({ type: 'SET_SELECTED_PATH', payload: { path: state.flatList[newIndex].path, index: newIndex } });
+      // Use filtered list when filter is active
+      const list = state.filteredFileList || state.flatList;
+      const maxIndex = list.length - 1;
+      const newIndex = Math.max(0, Math.min(maxIndex, state.selectedIndex + delta));
+      if (newIndex !== state.selectedIndex) {
+        dispatch({ type: 'SET_SELECTED_PATH', payload: { path: null, index: newIndex } });
       }
     },
 
     selectFirst: () => {
-      if (state.flatList.length > 0) {
-        dispatch({ type: 'SET_SELECTED_PATH', payload: { path: state.flatList[0].path, index: 0 } });
-      }
+      dispatch({ type: 'SET_SELECTED_PATH', payload: { path: null, index: 0 } });
     },
 
     selectLast: () => {
-      if (state.flatList.length > 0) {
-        const lastIndex = state.flatList.length - 1;
-        dispatch({ type: 'SET_SELECTED_PATH', payload: { path: state.flatList[lastIndex].path, index: lastIndex } });
+      const list = state.filteredFileList || state.flatList;
+      const maxIndex = list.length - 1;
+      if (maxIndex >= 0) {
+        dispatch({ type: 'SET_SELECTED_PATH', payload: { path: null, index: maxIndex } });
       }
     },
 
     toggleExpandDir: (path) => dispatch({ type: 'TOGGLE_EXPAND_DIR', payload: path }),
 
     toggleExpandSelected: () => {
-      const item = state.flatList[state.selectedIndex];
+      const list = state.filteredFileList || state.flatList;
+      const item = list[state.selectedIndex];
       if (item?.type === 'directory') {
         dispatch({ type: 'TOGGLE_EXPAND_DIR', payload: item.path });
       }
     },
 
     collapseSelected: () => {
-      const item = state.flatList[state.selectedIndex];
+      const list = state.filteredFileList || state.flatList;
+      const item = list[state.selectedIndex];
       if (item) {
         if (item.type === 'directory' && state.expandedDirs.has(item.path)) {
           dispatch({ type: 'TOGGLE_EXPAND_DIR', payload: item.path });
         } else if (item.depth > 0) {
           for (let i = state.selectedIndex - 1; i >= 0; i--) {
-            const parent = state.flatList[i];
+            const parent = list[i];
             if (parent.type === 'directory' && parent.depth < item.depth) {
               dispatch({ type: 'SET_SELECTED_PATH', payload: { path: parent.path, index: i } });
               break;
@@ -376,7 +428,8 @@ export function AppProvider({ children, notesDirectory }) {
     },
 
     createFile: (name) => {
-      const item = state.flatList[state.selectedIndex];
+      const list = state.filteredFileList || state.flatList;
+      const item = list[state.selectedIndex];
       let targetDir = notesDirectory;
       if (item) {
         targetDir = item.type === 'directory' ? item.path : item.path.substring(0, item.path.lastIndexOf('/'));
@@ -391,7 +444,8 @@ export function AppProvider({ children, notesDirectory }) {
     },
 
     createDirectory: (name) => {
-      const item = state.flatList[state.selectedIndex];
+      const list = state.filteredFileList || state.flatList;
+      const item = list[state.selectedIndex];
       let targetDir = notesDirectory;
       if (item) {
         targetDir = item.type === 'directory' ? item.path : item.path.substring(0, item.path.lastIndexOf('/'));
@@ -406,7 +460,8 @@ export function AppProvider({ children, notesDirectory }) {
     },
 
     renameItem: (newName) => {
-      const item = state.flatList[state.selectedIndex];
+      const list = state.filteredFileList || state.flatList;
+      const item = list[state.selectedIndex];
       if (!item) return;
       try {
         const oldName = item.name;
@@ -419,7 +474,8 @@ export function AppProvider({ children, notesDirectory }) {
     },
 
     deleteItem: () => {
-      const item = state.flatList[state.selectedIndex];
+      const list = state.filteredFileList || state.flatList;
+      const item = list[state.selectedIndex];
       if (!item) return;
       try {
         const name = item.name;
@@ -433,7 +489,8 @@ export function AppProvider({ children, notesDirectory }) {
 
     // Reload preview content (after external edit)
     reloadPreview: () => {
-      const selectedItem = state.flatList.find(item => item.path === state.selectedPath);
+      const list = state.filteredFileList || state.flatList;
+      const selectedItem = list[state.selectedIndex];
       if (selectedItem && selectedItem.type === 'file') {
         const content = readFileContent(selectedItem.path);
         dispatch({ type: 'SET_PREVIEW_CONTENT', payload: content });
@@ -445,24 +502,35 @@ export function AppProvider({ children, notesDirectory }) {
     // Tab switching
     setActiveTab: (tab) => dispatch({ type: 'SET_ACTIVE_TAB', payload: tab }),
 
+    // Search
+    startSearch: () => dispatch({ type: 'START_SEARCH' }),
+    setSearchQuery: (query) => dispatch({ type: 'SET_SEARCH_QUERY', payload: query }),
+    confirmSearch: () => dispatch({ type: 'CONFIRM_SEARCH' }),
+    clearSearch: () => dispatch({ type: 'CLEAR_SEARCH' }),
+    setFilteredFileList: (list) => dispatch({ type: 'SET_FILTERED_FILE_LIST', payload: list }),
+    setFilteredTodoList: (list) => dispatch({ type: 'SET_FILTERED_TODO_LIST', payload: list }),
+
     // Todo navigation
     moveTodoSelection: (delta) => {
-      const { flatList, selectedIndex } = state.todos;
-      const newIndex = Math.max(0, Math.min(flatList.length - 1, selectedIndex + delta));
+      const { selectedIndex } = state.todos;
+      // Use filtered list when filter is active
+      const list = state.filteredTodoList || state.todos.flatList;
+      const maxIndex = list.length - 1;
+      const newIndex = Math.max(0, Math.min(maxIndex, selectedIndex + delta));
       if (newIndex !== selectedIndex) {
         dispatch({ type: 'SET_TODO_SELECTION', payload: newIndex });
       }
     },
 
     selectFirstTodo: () => {
-      if (state.todos.flatList.length > 0) {
-        dispatch({ type: 'SET_TODO_SELECTION', payload: 0 });
-      }
+      dispatch({ type: 'SET_TODO_SELECTION', payload: 0 });
     },
 
     selectLastTodo: () => {
-      if (state.todos.flatList.length > 0) {
-        dispatch({ type: 'SET_TODO_SELECTION', payload: state.todos.flatList.length - 1 });
+      const list = state.filteredTodoList || state.todos.flatList;
+      const maxIndex = list.length - 1;
+      if (maxIndex >= 0) {
+        dispatch({ type: 'SET_TODO_SELECTION', payload: maxIndex });
       }
     },
 
@@ -523,7 +591,8 @@ export function AppProvider({ children, notesDirectory }) {
 
     // Get selected todo item
     getSelectedTodo: () => {
-      const item = state.todos.flatList[state.todos.selectedIndex];
+      const list = state.filteredTodoList || state.todos.flatList;
+      const item = list[state.todos.selectedIndex];
       if (item?.type === 'todo') {
         return state.todos.items.find((t) => t.id === item.id);
       }
@@ -532,7 +601,8 @@ export function AppProvider({ children, notesDirectory }) {
 
     // Get selected category name
     getSelectedCategory: () => {
-      const item = state.todos.flatList[state.todos.selectedIndex];
+      const list = state.filteredTodoList || state.todos.flatList;
+      const item = list[state.todos.selectedIndex];
       if (item?.type === 'category') {
         return item.name;
       }
