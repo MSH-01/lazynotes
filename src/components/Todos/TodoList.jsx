@@ -62,14 +62,14 @@ export function TodoList({ maxHeight = 20 }) {
     <Box flexDirection="column" width="100%">
       {visibleItems.map((item, idx) => {
         const actualIndex = scrollOffset + idx;
-        const key = item.type === 'category' ? `cat-${item.name}` : `todo-${item.id}`;
+        const key = item.type === 'category' ? `cat-${item.fullPath || item.name}` : `todo-${item.id}`;
 
         return (
           <TodoItem
             key={key}
             item={item}
             isSelected={actualIndex === selectedIndex}
-            isExpanded={item.type === 'category' && expandedCategories.has(item.name)}
+            isExpanded={item.type === 'category' && expandedCategories.has(item.fullPath || item.name)}
             isInVisualSelection={isInVisualRange(actualIndex)}
           />
         );

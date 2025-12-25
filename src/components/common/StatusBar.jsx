@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { TextInput } from '@inkjs/ui';
 import { useAppContext } from '../../context/AppContext.jsx';
+import { VERSION } from '../../version.js';
 
 const HINTS = {
   preview: 'j/k:scroll  g/G:top/bottom  e:edit  /:search  q:quit',
@@ -106,11 +107,13 @@ export function StatusBar() {
       borderStyle="round"
       borderColor="gray"
       borderTop
+      justifyContent="space-between"
       borderBottom={false}
       borderLeft={false}
       borderRight={false}
     >
       <Text color="gray">{hint}</Text>
+      <Text color="greenBright">{VERSION}</Text>
     </Box>
   );
 }

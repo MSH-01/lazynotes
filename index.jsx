@@ -6,6 +6,7 @@ import { App } from "./src/App.jsx";
 
 // Enter alternate screen buffer (like lazygit, vim, etc.)
 const enterAltScreen = () => {
+  // process.stdout.write('\x1b]0;lazynotes\x07'); // Set terminal title
   process.stdout.write('\x1b[?1049h'); // Enter alternate screen
   process.stdout.write('\x1b[?25l');   // Hide cursor
   process.stdout.write('\x1b[2J');     // Clear screen
