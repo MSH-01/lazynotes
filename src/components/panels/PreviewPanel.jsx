@@ -112,7 +112,7 @@ export function PreviewPanel({ maxHeight = 20, onOpenEditor }) {
   // Build title
   let title = '[0] Preview';
   if (showCredits) {
-    title = '[0] Preview - Credits';
+    title = '[0] Status';
   } else if (selectedItem) {
     title = `[0] Preview - ${selectedItem.name}${isFile ? ' (e to edit)' : ''}`;
   }

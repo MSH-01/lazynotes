@@ -32,13 +32,33 @@ const cli = meow(`
 function AppContent({ onOpenEditor }) {
   const { exit } = useApp();
   const { state, actions } = useAppContext();
-  const { modal, flatList, selectedIndex, todos } = state;
+  const { modal, flatList, selectedIndex, todos, filteredFileList, filteredTodoList } = state;
 
-  const selectedItem = flatList[selectedIndex];
-  const selectedTodoItem = todos.flatList[todos.selectedIndex];
+  // Use filtered lists when available
+  const fileList = filteredFileList || flatList;
+  const todoList = filteredTodoList || todos.flatList;
+
+  const selectedItem = fileList[selectedIndex];
+  const selectedTodoItem = todoList[todos.selectedIndex];
   const selectedTodo = selectedTodoItem?.type === 'todo'
     ? todos.items.find((t) => t.id === selectedTodoItem.id)
     : null;
+
+  // Determine default category for new todos based on selection
+  const getDefaultCategory = () => {
+    if (!selectedTodoItem) return '';
+    if (selectedTodoItem.type === 'category') {
+      // If a category is selected, use it (unless it's special)
+      const name = selectedTodoItem.name;
+      if (name === 'Uncategorised' || name === 'Completed') return '';
+      return name;
+    }
+    if (selectedTodoItem.type === 'todo') {
+      // If a todo is selected, use its category
+      return selectedTodoItem.category || '';
+    }
+    return '';
+  };
 
   const { isSearching } = state;
 
@@ -213,6 +233,7 @@ function AppContent({ onOpenEditor }) {
         <TodoModal
           title="Create Todo"
           categories={todos.categories}
+          defaultCategory={getDefaultCategory()}
           onSubmit={handleCreateTodo}
           onCancel={handleCancelModal}
         />
