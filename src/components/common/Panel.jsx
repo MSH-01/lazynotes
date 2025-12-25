@@ -7,7 +7,7 @@ export function Panel({ title, children, isFocused = false, height, flexGrow }) 
   return (
     <Box
       flexDirection="column"
-      borderStyle="single"
+      borderStyle="round"
       borderColor={borderColor}
       height={height}
       flexGrow={flexGrow}

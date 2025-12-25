@@ -3,9 +3,10 @@ import { Box, Text } from 'ink';
 import { useAppContext } from '../../context/AppContext.jsx';
 
 const HINTS = {
-  fileTree: 'j/k:navigate  Enter:expand  n:new file  N:new dir  r:rename  d:delete  q:quit',
   preview: 'j/k:scroll  g/G:top/bottom  Ctrl+d/u:page down/up  q:quit',
-  metadata: '0:files  1:preview  q:quit',
+  status: '0:preview  2:files  3:info  q:quit',
+  fileTree: 'j/k:navigate  Enter:expand  n:new file  N:new dir  r:rename  d:delete  q:quit',
+  metadata: '0:preview  1:status  2:files  q:quit',
 };
 
 export function StatusBar() {
@@ -16,7 +17,7 @@ export function StatusBar() {
 
   return (
     <Box
-      borderStyle="single"
+      borderStyle="round"
       borderColor="gray"
       borderTop
       borderBottom={false}

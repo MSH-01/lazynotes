@@ -1,29 +1,38 @@
 import React from 'react';
 import { Box, useStdout } from 'ink';
+import { StatusPanel } from './panels/StatusPanel.jsx';
 import { FileTreePanel } from './panels/FileTreePanel.jsx';
 import { MetadataPanel } from './panels/MetadataPanel.jsx';
 import { PreviewPanel } from './panels/PreviewPanel.jsx';
+import { CommandLogPanel } from './panels/CommandLogPanel.jsx';
 import { StatusBar } from './common/StatusBar.jsx';
 
 export function Layout() {
   const { stdout } = useStdout();
   const terminalHeight = stdout?.rows || 24;
-  const contentHeight = terminalHeight - 2;
-  const fileTreeHeight = Math.floor(contentHeight * 0.7) - 8;
-  const previewHeight = contentHeight - 2;
+  const terminalWidth = stdout?.columns || 80;
+
+  // Calculate heights
+  const statusBarHeight = 2;
+  const commandLogHeight = 6;
+  const contentHeight = terminalHeight - statusBarHeight;
+  const rightPanelPreviewHeight = contentHeight - commandLogHeight;
+  const leftPanelFileTreeHeight = Math.floor(contentHeight * 0.55);
 
   return (
-    <Box flexDirection="column" height={terminalHeight}>
+    <Box flexDirection="column" height={terminalHeight} width={terminalWidth}>
       <Box flexDirection="row" flexGrow={1}>
-        {/* Left panel: 1/3 width, split into FileTree and Metadata */}
+        {/* Left panel: 1/3 width, split into Status, FileTree, and Metadata */}
         <Box flexDirection="column" width="33%">
-          <FileTreePanel maxHeight={fileTreeHeight} />
+          <StatusPanel />
+          <FileTreePanel maxHeight={leftPanelFileTreeHeight - 12} />
           <MetadataPanel />
         </Box>
 
-        {/* Right panel: 2/3 width, Preview */}
+        {/* Right panel: 2/3 width, Preview + Command Log */}
         <Box flexDirection="column" width="67%">
-          <PreviewPanel maxHeight={previewHeight} />
+          <PreviewPanel maxHeight={rightPanelPreviewHeight - 4} />
+          <CommandLogPanel maxHeight={4} />
         </Box>
       </Box>
 

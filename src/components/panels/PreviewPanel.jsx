@@ -3,10 +3,36 @@ import { Box, Text, useInput } from 'ink';
 import { Panel } from '../common/Panel.jsx';
 import { useAppContext } from '../../context/AppContext.jsx';
 
+const CREDITS = `
+  ╭─────────────────────────────────────╮
+  │           L A Z Y N O T E S         │
+  │                                     │
+  │   A terminal-based note manager     │
+  │   inspired by Lazygit               │
+  │                                     │
+  │   Built with:                       │
+  │   • React + Ink                     │
+  │   • Node.js                         │
+  │                                     │
+  │   Keyboard shortcuts:               │
+  │   0-4    Switch panels              │
+  │   j/k    Navigate / Scroll          │
+  │   Enter  Expand/collapse folders    │
+  │   n      New file                   │
+  │   N      New directory              │
+  │   r      Rename                     │
+  │   d      Delete                     │
+  │   q      Quit                       │
+  │                                     │
+  │   github.com/MSH-01/lazynotes       │
+  ╰─────────────────────────────────────╯
+`;
+
 export function PreviewPanel({ maxHeight = 20 }) {
   const { state, actions } = useAppContext();
   const { focusedPanel, previewContent, previewError, previewScrollOffset, flatList, selectedPath, modal } = state;
   const isFocused = focusedPanel === 'preview';
+  const showCredits = focusedPanel === 'status';
 
   const selectedItem = flatList.find(item => item.path === selectedPath);
   const isDirectory = selectedItem?.type === 'directory';
@@ -34,6 +60,17 @@ export function PreviewPanel({ maxHeight = 20 }) {
   }, { isActive: isFocused && !modal });
 
   const renderContent = () => {
+    // Show credits when status panel is focused
+    if (showCredits) {
+      return (
+        <Box flexDirection="column">
+          {CREDITS.split('\n').map((line, i) => (
+            <Text key={i} color="cyan">{line}</Text>
+          ))}
+        </Box>
+      );
+    }
+
     if (previewError) {
       return <Text color="red">{previewError}</Text>;
     }
@@ -66,9 +103,11 @@ export function PreviewPanel({ maxHeight = 20 }) {
     );
   };
 
-  const title = selectedItem
-    ? `[1] Preview - ${selectedItem.name}`
-    : '[1] Preview';
+  const title = showCredits
+    ? '[0] Preview - Credits'
+    : selectedItem
+      ? `[0] Preview - ${selectedItem.name}`
+      : '[0] Preview';
 
   return (
     <Panel title={title} isFocused={isFocused} flexGrow={1}>

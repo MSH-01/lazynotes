@@ -44,9 +44,11 @@ function AppContent() {
 
     // Panel switching (only when no modal)
     if (!modal) {
-      if (input === '0') actions.setFocusedPanel('fileTree');
-      else if (input === '1') actions.setFocusedPanel('preview');
-      else if (input === '2') actions.setFocusedPanel('metadata');
+      if (input === '0') actions.setFocusedPanel('preview');
+      else if (input === '1') actions.setFocusedPanel('status');
+      else if (input === '2') actions.setFocusedPanel('fileTree');
+      else if (input === '3') actions.setFocusedPanel('metadata');
+      // 4 is command log - not focusable
     }
   });
 

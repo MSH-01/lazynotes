@@ -1,7 +1,11 @@
 import React from 'react';
-import { Box, Text, useInput } from 'ink';
+import { Box, Text, useInput, useStdout } from 'ink';
 
 export function ConfirmModal({ title, message, onConfirm, onCancel }) {
+  const { stdout } = useStdout();
+  const terminalHeight = stdout?.rows || 24;
+  const terminalWidth = stdout?.columns || 80;
+
   useInput((input, key) => {
     if (input === 'y' || input === 'Y') {
       onConfirm();
@@ -12,21 +16,27 @@ export function ConfirmModal({ title, message, onConfirm, onCancel }) {
 
   return (
     <Box
-      flexDirection="column"
-      borderStyle="double"
-      borderColor="red"
-      paddingX={2}
-      paddingY={1}
       position="absolute"
-      marginLeft={10}
-      marginTop={5}
+      width={terminalWidth}
+      height={terminalHeight}
+      justifyContent="center"
+      alignItems="center"
     >
-      <Text bold color="red">{title}</Text>
-      <Box marginTop={1}>
-        <Text>{message}</Text>
-      </Box>
-      <Box marginTop={1}>
-        <Text color="gray">y: confirm, n: cancel</Text>
+      <Box
+        flexDirection="column"
+        borderStyle="double"
+        borderColor="red"
+        paddingX={2}
+        paddingY={1}
+        minWidth={40}
+      >
+        <Text bold color="red">{title}</Text>
+        <Box marginTop={1}>
+          <Text>{message}</Text>
+        </Box>
+        <Box marginTop={1}>
+          <Text color="gray">y: confirm, n: cancel</Text>
+        </Box>
       </Box>
     </Box>
   );
