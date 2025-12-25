@@ -110,11 +110,11 @@ export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
       // Expand/collapse category or toggle todo
       else if (key.return || input === 'l' || key.rightArrow) {
         if (selectedItem?.type === 'category') {
-          actions.toggleExpandCategory(selectedItem.name);
+          actions.toggleExpandCategory(selectedItem.fullPath || selectedItem.name);
         }
       } else if (input === 'h' || key.leftArrow) {
-        if (selectedItem?.type === 'category' && todos.expandedCategories.has(selectedItem.name)) {
-          actions.toggleExpandCategory(selectedItem.name);
+        if (selectedItem?.type === 'category' && todos.expandedCategories.has(selectedItem.fullPath || selectedItem.name)) {
+          actions.toggleExpandCategory(selectedItem.fullPath || selectedItem.name);
         } else if (selectedItem?.type === 'todo') {
           // Find parent category and jump to it (only works in unfiltered mode)
           for (let i = todos.selectedIndex - 1; i >= 0; i--) {

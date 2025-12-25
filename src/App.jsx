@@ -49,9 +49,9 @@ function AppContent({ onOpenEditor }) {
     if (!selectedTodoItem) return '';
     if (selectedTodoItem.type === 'category') {
       // If a category is selected, use it (unless it's special)
-      const name = selectedTodoItem.name;
-      if (name === 'Uncategorised' || name === 'Completed') return '';
-      return name;
+      const fullPath = selectedTodoItem.fullPath || selectedTodoItem.name;
+      if (fullPath === 'Uncategorised' || fullPath === 'Completed') return '';
+      return fullPath;
     }
     if (selectedTodoItem.type === 'todo') {
       // If a todo is selected, use its category
@@ -150,7 +150,7 @@ function AppContent({ onOpenEditor }) {
 
   const handleDeleteCategory = () => {
     if (selectedTodoItem?.type === 'category') {
-      actions.deleteCategory(selectedTodoItem.name);
+      actions.deleteCategory(selectedTodoItem.fullPath || selectedTodoItem.name);
     }
     actions.setModal(null);
   };
@@ -335,7 +335,7 @@ function AppContent({ onOpenEditor }) {
       {modal === 'deleteCategory' && selectedTodoItem?.type === 'category' && (
         <ConfirmModal
           title="Delete Category"
-          message={`Delete category "${selectedTodoItem.name}"? Todos will be moved to Uncategorised.`}
+          message={`Delete "${selectedTodoItem.fullPath || selectedTodoItem.name}" and all sub-categories? Todos will be moved to Uncategorised.`}
           onConfirm={handleDeleteCategory}
           onCancel={handleCancelModal}
         />

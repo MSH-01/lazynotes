@@ -13,6 +13,8 @@ import {
   saveTodos as fsSaveTodos,
   buildTodoFlatList,
   generateTodoId,
+  isDescendantOf,
+  parseCategoryPath,
 } from '../utils/todos.js';
 
 const AppContext = createContext(null);
@@ -220,12 +222,22 @@ function appReducer(state, action) {
       };
 
     case 'TOGGLE_TODO_CATEGORY': {
+      const categoryPath = action.payload;
       const newExpanded = new Set(state.todos.expandedCategories);
-      if (newExpanded.has(action.payload)) {
-        newExpanded.delete(action.payload);
+
+      if (newExpanded.has(categoryPath)) {
+        // Collapsing: remove this category AND all descendants
+        newExpanded.delete(categoryPath);
+        for (const cat of newExpanded) {
+          if (isDescendantOf(cat, categoryPath)) {
+            newExpanded.delete(cat);
+          }
+        }
       } else {
-        newExpanded.add(action.payload);
+        // Expanding: just add this category
+        newExpanded.add(categoryPath);
       }
+
       return {
         ...state,
         todos: {
@@ -294,18 +306,28 @@ function appReducer(state, action) {
         },
       };
 
-    case 'DELETE_CATEGORY':
+    case 'DELETE_CATEGORY': {
+      const categoryPath = action.payload;
+      // Find all categories to delete (this one + all descendants)
+      const categoriesToDelete = [categoryPath];
+      for (const cat of state.todos.categories) {
+        if (isDescendantOf(cat, categoryPath)) {
+          categoriesToDelete.push(cat);
+        }
+      }
+
       return {
         ...state,
         todos: {
           ...state.todos,
-          categories: state.todos.categories.filter((c) => c !== action.payload),
-          // Move items from deleted category to uncategorised
+          categories: state.todos.categories.filter((c) => !categoriesToDelete.includes(c)),
+          // Move items from deleted categories to uncategorised
           items: state.todos.items.map((item) =>
-            item.category === action.payload ? { ...item, category: '' } : item
+            categoriesToDelete.includes(item.category) ? { ...item, category: '' } : item
           ),
         },
       };
+    }
 
     default:
       return state;
@@ -675,8 +697,16 @@ export function AppProvider({ children, notesDirectory }) {
     // Category management
     createCategory: (name) => {
       if (name && name.trim() && name !== 'Uncategorised' && name !== 'Completed') {
-        dispatch({ type: 'ADD_CATEGORY', payload: name.trim() });
-        logCommand(`Created category: ${name}`);
+        const trimmedName = name.trim();
+        // Auto-create all parent categories
+        const segments = parseCategoryPath(trimmedName);
+        for (let i = 1; i <= segments.length; i++) {
+          const path = segments.slice(0, i).join('/');
+          if (!state.todos.categories.includes(path)) {
+            dispatch({ type: 'ADD_CATEGORY', payload: path });
+          }
+        }
+        logCommand(`Created category: ${trimmedName}`);
       }
     },
 
@@ -695,12 +725,12 @@ export function AppProvider({ children, notesDirectory }) {
       return null;
     },
 
-    // Get selected category name
+    // Get selected category (returns fullPath for hierarchical categories)
     getSelectedCategory: () => {
       const list = state.filteredTodoList || state.todos.flatList;
       const item = list[state.todos.selectedIndex];
       if (item?.type === 'category') {
-        return item.name;
+        return item.fullPath || item.name;
       }
       return null;
     },
