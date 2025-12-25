@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx tsx index.jsx",
+    "start": "npx tsx index.tsx",
+    "dev": "npx tsx index.tsx",
+    "typecheck": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,7 +18,7 @@
   "license": "ISC",
   "type": "module",
   "bin": {
-    "lazynotes": "./index.jsx"
+    "lazynotes": "./index.tsx"
   },
   "bugs": {
     "url": "https://github.com/MSH-01/lazynotes/issues"
@@ -33,6 +35,9 @@
     "react": "^19.2.3"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.1.8",
+    "typescript": "^5.7.2",
     "tsx": "^4.21.0"
   }
 }
