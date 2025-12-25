@@ -13,3 +13,4 @@ export { SearchProvider, useSearchContext } from './SearchContext';
 export { SelectionProvider, useSelectionContext } from './SelectionContext';
 export { FileSystemProvider, useFileSystemContext } from './FileSystemContext';
 export { TodoProvider, useTodoContext } from './TodoContext';
+export { KarmaProvider, useKarma } from './KarmaContext';

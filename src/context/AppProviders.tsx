@@ -4,6 +4,7 @@ import { SearchProvider, useSearchContext, type SearchContextValue } from './Sea
 import { SelectionProvider, useSelectionContext, type SelectionContextValue } from './SelectionContext';
 import { FileSystemProvider, useFileSystemContext, type FileSystemContextValue } from './FileSystemContext';
 import { TodoProvider, useTodoContext, type TodoContextValue } from './TodoContext';
+import { KarmaProvider, useKarma } from './KarmaContext';
 import { readFileContent } from '../utils/fs';
 import type { FileTreeNode, TodoListItem, TabType } from '../types';
 
@@ -126,13 +127,15 @@ function DataProviders({
  */
 export function AppProviders({ children, notesDirectory }: AppProvidersProps) {
   return (
-    <UIProvider>
-      <SearchProvider>
-        <SelectionProviderWrapper>
-          <DataProviders notesDirectory={notesDirectory}>{children}</DataProviders>
-        </SelectionProviderWrapper>
-      </SearchProvider>
-    </UIProvider>
+    <KarmaProvider>
+      <UIProvider>
+        <SearchProvider>
+          <SelectionProviderWrapper>
+            <DataProviders notesDirectory={notesDirectory}>{children}</DataProviders>
+          </SelectionProviderWrapper>
+        </SearchProvider>
+      </UIProvider>
+    </KarmaProvider>
   );
 }
 
@@ -146,6 +149,7 @@ export function useApp() {
   const selection = useSelectionContext();
   const fileSystem = useFileSystemContext();
   const todos = useTodoContext();
+  const karma = useKarma();
 
   return {
     ui,
@@ -153,6 +157,7 @@ export function useApp() {
     selection,
     fileSystem,
     todos,
+    karma,
     // Convenience getters for the combined state shape similar to old AppContext
     state: {
       // UI
