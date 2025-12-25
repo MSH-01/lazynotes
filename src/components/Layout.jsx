@@ -15,9 +15,12 @@ export function Layout({ onOpenEditor }) {
   // Calculate heights
   const statusBarHeight = 2;
   const commandLogHeight = 6;
+  const statusPanelHeight = 4; // Status panel approximate height
+  const metadataPanelHeight = 8; // Metadata panel fixed height
   const contentHeight = terminalHeight - statusBarHeight;
   const rightPanelPreviewHeight = contentHeight - commandLogHeight;
-  const leftPanelFileTreeHeight = Math.floor(contentHeight * 0.55);
+  // FileTree gets remaining space after Status and Metadata panels
+  const leftPanelFileTreeHeight = contentHeight - statusPanelHeight - metadataPanelHeight - 4; // -4 for borders
 
   return (
     <Box flexDirection="column" height={terminalHeight} width={terminalWidth}>
@@ -25,7 +28,7 @@ export function Layout({ onOpenEditor }) {
         {/* Left panel: 1/3 width, split into Status, FileTree, and Metadata */}
         <Box flexDirection="column" width="33%">
           <StatusPanel />
-          <FileTreePanel maxHeight={leftPanelFileTreeHeight - 12} onOpenEditor={onOpenEditor} />
+          <FileTreePanel maxHeight={leftPanelFileTreeHeight} onOpenEditor={onOpenEditor} />
           <MetadataPanel />
         </Box>
 
