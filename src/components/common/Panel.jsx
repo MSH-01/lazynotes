@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 
 export function Panel({ title, children, isFocused = false, height, flexGrow }) {
-  const borderColor = isFocused ? 'cyan' : 'gray';
+  const borderColor = isFocused ? 'blue' : 'gray';
 
   return (
     <Box
@@ -12,14 +12,13 @@ export function Panel({ title, children, isFocused = false, height, flexGrow }) 
       height={height}
       flexGrow={flexGrow}
     >
+      {/* Title embedded in border - positioned at top */}
       {title && (
-        <Box paddingX={1}>
-          <Text bold color={isFocused ? 'cyan' : 'white'}>
-            {title}
-          </Text>
+        <Box marginTop={-1} marginLeft={1} position="absolute">
+          <Text color={borderColor}>{title}</Text>
         </Box>
       )}
-      <Box flexDirection="column" flexGrow={1} paddingX={1}>
+      <Box flexDirection="column" flexGrow={1} paddingX={1} paddingTop={title ? 0 : 0}>
         {children}
       </Box>
     </Box>

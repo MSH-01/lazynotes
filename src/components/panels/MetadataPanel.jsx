@@ -13,14 +13,14 @@ export function MetadataPanel() {
 
   if (!selectedItem) {
     return (
-      <Panel title="Info [2]" isFocused={isFocused} height={8}>
+      <Panel title="[2] Info" isFocused={isFocused} height={8}>
         <Text color="gray">No file selected</Text>
       </Panel>
     );
   }
 
   return (
-    <Panel title="Info [2]" isFocused={isFocused} height={8}>
+    <Panel title="[2] Info" isFocused={isFocused} height={8}>
       <Box flexDirection="column">
         <Box>
           <Text color="gray">Type: </Text>

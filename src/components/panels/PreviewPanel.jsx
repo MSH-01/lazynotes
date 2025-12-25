@@ -67,8 +67,8 @@ export function PreviewPanel({ maxHeight = 20 }) {
   };
 
   const title = selectedItem
-    ? `Preview [1] - ${selectedItem.name}`
-    : 'Preview [1]';
+    ? `[1] Preview - ${selectedItem.name}`
+    : '[1] Preview';
 
   return (
     <Panel title={title} isFocused={isFocused} flexGrow={1}>
