@@ -1,6 +1,7 @@
 #!/usr/bin/env npx tsx
 import React from "react";
 import { render } from "ink";
+import { spawnSync } from "child_process";
 import { App } from "./src/App.jsx";
 
 // Enter alternate screen buffer (like lazygit, vim, etc.)
@@ -15,6 +16,21 @@ const enterAltScreen = () => {
 const exitAltScreen = () => {
   process.stdout.write('\x1b[?25h');   // Show cursor
   process.stdout.write('\x1b[?1049l'); // Exit alternate screen
+};
+
+// Open file in external editor
+const openEditor = (filePath) => {
+  // Exit alternate screen to give editor full control
+  exitAltScreen();
+
+  // Use $EDITOR env var, fall back to vim
+  const editor = process.env.EDITOR || 'vim';
+
+  // Spawn editor synchronously - blocks until editor closes
+  spawnSync(editor, [filePath], { stdio: 'inherit' });
+
+  // Re-enter alternate screen
+  enterAltScreen();
 };
 
 // Enter fullscreen immediately
@@ -36,7 +52,7 @@ process.on('SIGTERM', () => {
 });
 
 // Render the app
-const { unmount, waitUntilExit } = render(<App />);
+const { unmount, waitUntilExit } = render(<App onOpenEditor={openEditor} />);
 
 // Wait for app to exit, then cleanup
 waitUntilExit().then(() => {

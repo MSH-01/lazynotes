@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 
 export function Panel({ title, children, isFocused = false, height, flexGrow }) {
-  const borderColor = isFocused ? 'blue' : 'gray';
+  const borderColor = isFocused ? 'blue' : undefined;
 
   return (
     <Box

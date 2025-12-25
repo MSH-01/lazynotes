@@ -92,7 +92,7 @@ function appReducer(state, action) {
     case 'LOG_COMMAND':
       return {
         ...state,
-        commandLog: [...state.commandLog, { message: action.payload, timestamp: new Date() }].slice(-50), // Keep last 50
+        commandLog: [...state.commandLog, { message: action.payload, timestamp: new Date() }].slice(-50),
       };
 
     default:
@@ -269,6 +269,15 @@ export function AppProvider({ children, notesDirectory }) {
         loadTree();
       } catch (err) {
         logCommand(`Error deleting: ${err.message}`);
+      }
+    },
+
+    // Reload preview content (after external edit)
+    reloadPreview: () => {
+      const selectedItem = state.flatList.find(item => item.path === state.selectedPath);
+      if (selectedItem && selectedItem.type === 'file') {
+        const content = readFileContent(selectedItem.path);
+        dispatch({ type: 'SET_PREVIEW_CONTENT', payload: content });
       }
     },
 

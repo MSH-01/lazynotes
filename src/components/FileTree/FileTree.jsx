@@ -26,7 +26,6 @@ export function FileTree({ maxHeight = 20 }) {
           item={item}
           isSelected={item.path === selectedPath}
           isExpanded={expandedDirs.has(item.path)}
-          width={50}
         />
       ))}
     </Box>

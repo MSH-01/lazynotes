@@ -4,13 +4,10 @@ import { Panel } from '../common/Panel.jsx';
 import { FileTree } from '../FileTree/FileTree.jsx';
 import { useAppContext } from '../../context/AppContext.jsx';
 
-export function FileTreePanel({ maxHeight = 15 }) {
+export function FileTreePanel({ maxHeight = 15, onOpenEditor }) {
   const { state, actions } = useAppContext();
   const { focusedPanel, flatList, selectedIndex, modal } = state;
   const isFocused = focusedPanel === 'fileTree';
-
-  // Also allow navigation when focused on status panel (convenience)
-  const canNavigate = isFocused;
 
   // Handle keyboard input when focused
   useInput((input, key) => {
@@ -27,14 +24,28 @@ export function FileTreePanel({ maxHeight = 15 }) {
       actions.selectLast();
     }
 
-    // Expand/collapse toggle
+    // Expand/collapse toggle or open file
     else if (key.return || input === 'l' || key.rightArrow) {
       const selectedItem = flatList[selectedIndex];
       if (selectedItem?.type === 'directory') {
         actions.toggleExpandSelected();
+      } else if (selectedItem?.type === 'file') {
+        // Switch to preview panel when pressing Enter on a file
+        actions.setFocusedPanel('preview');
       }
     } else if (input === 'h' || key.leftArrow) {
       actions.collapseSelected();
+    }
+
+    // Open in external editor with 'e'
+    else if (input === 'e') {
+      const selectedItem = flatList[selectedIndex];
+      if (selectedItem?.type === 'file' && onOpenEditor) {
+        onOpenEditor(selectedItem.path);
+        // After editor closes, reload content and file tree
+        actions.reloadPreview();
+        actions.loadTree();
+      }
     }
 
     // CRUD modals

@@ -18,6 +18,7 @@ const CREDITS = `
   │   0-4    Switch panels              │
   │   j/k    Navigate / Scroll          │
   │   Enter  Expand/collapse folders    │
+  │   e      Edit file in $EDITOR       │
   │   n      New file                   │
   │   N      New directory              │
   │   r      Rename                     │
@@ -28,18 +29,42 @@ const CREDITS = `
   ╰─────────────────────────────────────╯
 `;
 
-export function PreviewPanel({ maxHeight = 20 }) {
+export function PreviewPanel({ maxHeight = 20, onOpenEditor }) {
   const { state, actions } = useAppContext();
-  const { focusedPanel, previewContent, previewError, previewScrollOffset, flatList, selectedPath, modal } = state;
+  const {
+    focusedPanel,
+    previewContent,
+    previewError,
+    previewScrollOffset,
+    flatList,
+    selectedPath,
+    modal,
+  } = state;
+
   const isFocused = focusedPanel === 'preview';
   const showCredits = focusedPanel === 'status';
 
   const selectedItem = flatList.find(item => item.path === selectedPath);
   const isDirectory = selectedItem?.type === 'directory';
+  const isFile = selectedItem?.type === 'file';
 
-  // Handle keyboard input for scrolling
+  // Handle keyboard input
   useInput((input, key) => {
-    if (!isFocused || modal || !previewContent) return;
+    if (modal || !isFocused) return;
+
+    // Open in external editor with 'e'
+    if (input === 'e' && isFile && selectedItem) {
+      if (onOpenEditor) {
+        onOpenEditor(selectedItem.path);
+        // After editor closes, reload content and file tree
+        actions.reloadPreview();
+        actions.loadTree();
+      }
+      return;
+    }
+
+    // Scrolling
+    if (!previewContent) return;
 
     const lines = previewContent.split('\n');
     const maxScroll = Math.max(0, lines.length - maxHeight);
@@ -57,7 +82,7 @@ export function PreviewPanel({ maxHeight = 20 }) {
     } else if (key.ctrl && input === 'u') {
       actions.setPreviewScroll(Math.max(previewScrollOffset - Math.floor(maxHeight / 2), 0));
     }
-  }, { isActive: isFocused && !modal });
+  }, { isActive: isFocused });
 
   const renderContent = () => {
     // Show credits when status panel is focused
@@ -103,11 +128,13 @@ export function PreviewPanel({ maxHeight = 20 }) {
     );
   };
 
-  const title = showCredits
-    ? '[0] Preview - Credits'
-    : selectedItem
-      ? `[0] Preview - ${selectedItem.name}`
-      : '[0] Preview';
+  // Build title
+  let title = '[0] Preview';
+  if (showCredits) {
+    title = '[0] Preview - Credits';
+  } else if (selectedItem) {
+    title = `[0] Preview - ${selectedItem.name}${isFile ? ' (e to edit)' : ''}`;
+  }
 
   return (
     <Panel title={title} isFocused={isFocused} flexGrow={1}>
