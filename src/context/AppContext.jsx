@@ -33,6 +33,9 @@ const initialState = {
   // Scroll positions
   previewScrollOffset: 0,
   fileTreeScrollOffset: 0,
+
+  // Command log
+  commandLog: [],
 };
 
 function appReducer(state, action) {
@@ -85,6 +88,12 @@ function appReducer(state, action) {
 
     case 'SET_FILE_TREE_SCROLL':
       return { ...state, fileTreeScrollOffset: action.payload };
+
+    case 'LOG_COMMAND':
+      return {
+        ...state,
+        commandLog: [...state.commandLog, { message: action.payload, timestamp: new Date() }].slice(-50), // Keep last 50
+      };
 
     default:
       return state;
@@ -152,11 +161,14 @@ export function AppProvider({ children, notesDirectory }) {
     }
   }, [state.selectedPath, state.flatList]);
 
+  const logCommand = (message) => dispatch({ type: 'LOG_COMMAND', payload: message });
+
   const actions = {
     setFocusedPanel: (panel) => dispatch({ type: 'SET_FOCUSED_PANEL', payload: panel }),
     setModal: (modal) => dispatch({ type: 'SET_MODAL', payload: modal }),
     setPreviewScroll: (offset) => dispatch({ type: 'SET_PREVIEW_SCROLL', payload: offset }),
     setFileTreeScroll: (offset) => dispatch({ type: 'SET_FILE_TREE_SCROLL', payload: offset }),
+    logCommand,
 
     moveSelection: (delta) => {
       const newIndex = Math.max(0, Math.min(state.flatList.length - 1, state.selectedIndex + delta));
@@ -180,9 +192,9 @@ export function AppProvider({ children, notesDirectory }) {
 
     toggleExpandDir: (path) => dispatch({ type: 'TOGGLE_EXPAND_DIR', payload: path }),
 
-    expandSelected: () => {
+    toggleExpandSelected: () => {
       const item = state.flatList[state.selectedIndex];
-      if (item?.type === 'directory' && !state.expandedDirs.has(item.path)) {
+      if (item?.type === 'directory') {
         dispatch({ type: 'TOGGLE_EXPAND_DIR', payload: item.path });
       }
     },
@@ -212,9 +224,10 @@ export function AppProvider({ children, notesDirectory }) {
       }
       try {
         fsCreateFile(targetDir, name);
+        logCommand(`Created file: ${name}`);
         loadTree();
       } catch (err) {
-        console.error('Error creating file:', err);
+        logCommand(`Error creating file: ${err.message}`);
       }
     },
 
@@ -226,9 +239,10 @@ export function AppProvider({ children, notesDirectory }) {
       }
       try {
         fsCreateDirectory(targetDir, name);
+        logCommand(`Created directory: ${name}`);
         loadTree();
       } catch (err) {
-        console.error('Error creating directory:', err);
+        logCommand(`Error creating directory: ${err.message}`);
       }
     },
 
@@ -236,10 +250,12 @@ export function AppProvider({ children, notesDirectory }) {
       const item = state.flatList[state.selectedIndex];
       if (!item) return;
       try {
+        const oldName = item.name;
         fsRenameItem(item.path, newName);
+        logCommand(`Renamed: ${oldName} → ${newName}`);
         loadTree();
       } catch (err) {
-        console.error('Error renaming item:', err);
+        logCommand(`Error renaming: ${err.message}`);
       }
     },
 
@@ -247,10 +263,12 @@ export function AppProvider({ children, notesDirectory }) {
       const item = state.flatList[state.selectedIndex];
       if (!item) return;
       try {
+        const name = item.name;
         fsDeleteItem(item.path);
+        logCommand(`Deleted: ${name}`);
         loadTree();
       } catch (err) {
-        console.error('Error deleting item:', err);
+        logCommand(`Error deleting: ${err.message}`);
       }
     },
 

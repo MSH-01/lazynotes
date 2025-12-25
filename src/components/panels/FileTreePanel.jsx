@@ -9,6 +9,9 @@ export function FileTreePanel({ maxHeight = 15 }) {
   const { focusedPanel, flatList, selectedIndex, modal } = state;
   const isFocused = focusedPanel === 'fileTree';
 
+  // Also allow navigation when focused on status panel (convenience)
+  const canNavigate = isFocused;
+
   // Handle keyboard input when focused
   useInput((input, key) => {
     if (!isFocused || modal) return;
@@ -24,11 +27,11 @@ export function FileTreePanel({ maxHeight = 15 }) {
       actions.selectLast();
     }
 
-    // Expand/collapse
+    // Expand/collapse toggle
     else if (key.return || input === 'l' || key.rightArrow) {
       const selectedItem = flatList[selectedIndex];
       if (selectedItem?.type === 'directory') {
-        actions.expandSelected();
+        actions.toggleExpandSelected();
       }
     } else if (input === 'h' || key.leftArrow) {
       actions.collapseSelected();
@@ -56,7 +59,7 @@ export function FileTreePanel({ maxHeight = 15 }) {
   }, [selectedIndex, state.fileTreeScrollOffset, maxHeight, actions]);
 
   return (
-    <Panel title="[0] Files" isFocused={isFocused} flexGrow={1}>
+    <Panel title="[2] Files" isFocused={isFocused} flexGrow={1}>
       <FileTree maxHeight={maxHeight} />
     </Panel>
   );

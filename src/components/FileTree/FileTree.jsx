@@ -19,13 +19,14 @@ export function FileTree({ maxHeight = 20 }) {
   }
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" width="100%">
       {visibleItems.map((item) => (
         <FileTreeItem
           key={item.path}
           item={item}
           isSelected={item.path === selectedPath}
           isExpanded={expandedDirs.has(item.path)}
+          width={50}
         />
       ))}
     </Box>
