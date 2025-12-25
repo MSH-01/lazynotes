@@ -59,7 +59,7 @@ const initialState = {
     categories: [],
     items: [],
     selectedIndex: 0,
-    expandedCategories: new Set(['Uncategorised', 'Completed']),
+    expandedCategories: new Set(),
     flatList: [],
     scrollOffset: 0,
   },
