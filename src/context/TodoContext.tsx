@@ -17,6 +17,7 @@ import {
   isDescendantOf,
   parseCategoryPath,
 } from '../utils/todos';
+import { useKarma } from './KarmaContext';
 
 // ============================================================================
 // State & Reducer
@@ -153,6 +154,7 @@ export function TodoProvider({
   logCommand,
 }: TodoProviderProps) {
   const [state, dispatch] = useReducer(todoReducer, initialState);
+  const { actions: karmaActions } = useKarma();
 
   // Track if todos have been modified (skip save on initial load)
   const todosInitializedRef = useRef(false);
@@ -195,9 +197,10 @@ export function TodoProvider({
           depth: 0,
         };
         dispatch({ type: 'ADD_TODO', payload: todo });
+        karmaActions.awardKarma('create_todo');
         logCommand?.(`Created todo: ${text}`);
       },
-      [logCommand]
+      [logCommand, karmaActions]
     ),
 
     updateTodo: useCallback(
@@ -213,10 +216,13 @@ export function TodoProvider({
         const todo = state.items.find((t) => t.id === id);
         if (todo) {
           dispatch({ type: 'DELETE_TODO', payload: id });
+          if (!todo.completed) {
+            karmaActions.awardKarma('delete_todo');
+          }
           logCommand?.(`Deleted todo: ${todo.text}`);
         }
       },
-      [state.items, logCommand]
+      [state.items, logCommand, karmaActions]
     ),
 
     toggleTodoComplete: useCallback(
@@ -224,10 +230,11 @@ export function TodoProvider({
         const todo = state.items.find((t) => t.id === id);
         if (todo) {
           dispatch({ type: 'UPDATE_TODO', payload: { id, updates: { completed: !todo.completed } } });
+          karmaActions.awardKarma(todo.completed ? 'uncomplete_todo' : 'complete_todo', todo.priority);
           logCommand?.(todo.completed ? `Uncompleted: ${todo.text}` : `Completed: ${todo.text}`);
         }
       },
-      [state.items, logCommand]
+      [state.items, logCommand, karmaActions]
     ),
 
     createCategory: useCallback(
@@ -265,21 +272,26 @@ export function TodoProvider({
           const todo = state.items.find((t) => t.id === id);
           if (todo) {
             dispatch({ type: 'UPDATE_TODO', payload: { id, updates: { completed: !todo.completed } } });
+            karmaActions.awardKarma(todo.completed ? 'uncomplete_todo' : 'complete_todo', todo.priority);
           }
         }
         logCommand?.(`Toggled ${ids.length} todos`);
       },
-      [state.items, logCommand]
+      [state.items, logCommand, karmaActions]
     ),
 
     batchDeleteTodos: useCallback(
       (ids: string[]) => {
         for (const id of ids) {
+          const todo = state.items.find((t) => t.id === id);
           dispatch({ type: 'DELETE_TODO', payload: id });
+          if (todo && !todo.completed) {
+            karmaActions.awardKarma('delete_todo');
+          }
         }
         logCommand?.(`Deleted ${ids.length} todos`);
       },
-      [logCommand]
+      [state.items, logCommand, karmaActions]
     ),
 
     batchUpdateTodos: useCallback(

@@ -36,7 +36,8 @@ lazynotes/
     │   ├── SearchContext.tsx # Search state, filtered lists
     │   ├── SelectionContext.tsx # Selection indices, scroll, visual mode
     │   ├── FileSystemContext.tsx # File tree, CRUD operations
-    │   └── TodoContext.tsx   # Todos, categories, batch operations
+    │   ├── TodoContext.tsx   # Todos, categories, batch operations
+    │   └── KarmaContext.tsx  # Gamification state, karma actions
     ├── hooks/
     │   ├── index.ts          # Re-exports all hooks
     │   ├── useConfig.ts      # Configuration loading
@@ -62,7 +63,7 @@ lazynotes/
     │   │   ├── TodoList.tsx      # Todo list + filtering
     │   │   └── TodoItem.tsx      # Todo/category row (memoized)
     │   ├── panels/
-    │   │   ├── StatusPanel.tsx   # File/dir counts (memoized)
+    │   │   ├── StatusPanel.tsx   # Karma display (memoized)
     │   │   ├── FileTreePanel.tsx # Files + Todos tabs, keyboard
     │   │   ├── PreviewPanel.tsx  # File content preview
     │   │   ├── MetadataPanel.tsx # Selected item metadata
@@ -76,6 +77,7 @@ lazynotes/
     └── utils/
         ├── fs.ts             # File system operations
         ├── todos.ts          # Todo parsing, hierarchy helpers
+        ├── karma.ts          # Karma points, levels, persistence
         └── format.ts         # Date/size formatting
 ```
 
@@ -165,6 +167,7 @@ The app uses 5 focused contexts instead of a monolithic context:
 | `SelectionContext` | Selection indices, scroll offsets, visual mode |
 | `FileSystemContext` | File tree, CRUD operations |
 | `TodoContext` | Todos, categories, batch operations |
+| `KarmaContext` | Gamification points, levels, persistence |
 
 Each context has:
 - Typed state interface
@@ -303,6 +306,30 @@ Replaces 160+ lines of conditional modal rendering with a clean registry pattern
 - Todos: searches todo text only (not categories)
 - Implemented via `useFilteredList` hook
 
+### Karma System (Gamification)
+- Points awarded for todo actions, displayed in Status panel
+- Stored in `~/.config/lazynotes/karma.json`
+
+| Action | Points |
+|--------|--------|
+| Complete P1 todo | +40 |
+| Complete P2 todo | +30 |
+| Complete P3 todo | +20 |
+| Complete P4 todo | +10 |
+| Create todo | +5 |
+| Uncomplete todo | -points |
+| Delete incomplete | -5 |
+
+| Karma | Level | Title |
+|-------|-------|-------|
+| 0-99 | 1 | Beginner |
+| 100-499 | 2 | Apprentice |
+| 500-999 | 3 | Achiever |
+| 1000-2499 | 4 | Pro |
+| 2500-4999 | 5 | Expert |
+| 5000-9999 | 6 | Master |
+| 10000+ | 7 | Enlightened |
+
 ## Data Flow
 
 1. **User Input** → Ink's `useInput` hook in panel components
@@ -333,6 +360,10 @@ Replaces 160+ lines of conditional modal rendering with a clean registry pattern
 # Completed
 - [x] P3: Done task #Work
 ```
+
+### Karma
+- Single file: `~/.config/lazynotes/karma.json`
+- Stores total points and last 100 events for history
 
 ### Configuration Priority
 1. CLI flags: `--dir` or `-d`
