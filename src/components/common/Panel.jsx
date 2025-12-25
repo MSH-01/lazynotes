@@ -15,7 +15,11 @@ export function Panel({ title, children, isFocused = false, height, flexGrow }) 
       {/* Title embedded in border - positioned at top */}
       {title && (
         <Box marginTop={-1} marginLeft={1} position="absolute">
-          <Text color={borderColor}>{title}</Text>
+          {typeof title === 'string' ? (
+            <Text color={borderColor}>{title}</Text>
+          ) : (
+            title
+          )}
         </Box>
       )}
       <Box flexDirection="column" flexGrow={1} paddingX={1} paddingTop={title ? 0 : 0}>
