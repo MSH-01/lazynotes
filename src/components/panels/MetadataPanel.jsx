@@ -6,10 +6,11 @@ import { formatFileSize, formatDate, formatRelativeDate } from '../../utils/form
 
 export function MetadataPanel() {
   const { state } = useAppContext();
-  const { focusedPanel, flatList, selectedPath } = state;
+  const { focusedPanel, flatList, selectedIndex, filteredFileList } = state;
   const isFocused = focusedPanel === 'metadata';
 
-  const selectedItem = flatList.find(item => item.path === selectedPath);
+  const fileList = filteredFileList || flatList;
+  const selectedItem = fileList[selectedIndex];
 
   if (!selectedItem) {
     return (

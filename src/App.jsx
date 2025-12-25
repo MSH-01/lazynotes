@@ -40,8 +40,13 @@ function AppContent({ onOpenEditor }) {
     ? todos.items.find((t) => t.id === selectedTodoItem.id)
     : null;
 
+  const { isSearching } = state;
+
   // Global keyboard shortcuts
   useInput((input, key) => {
+    // Don't process shortcuts when searching (except handled in StatusBar)
+    if (isSearching) return;
+
     // Quit
     if (input === 'q' && !modal) {
       exit();
@@ -55,6 +60,11 @@ function AppContent({ onOpenEditor }) {
       else if (input === '2') actions.setFocusedPanel('fileTree');
       else if (input === '3') actions.setFocusedPanel('metadata');
       // 4 is command log - not focusable
+
+      // Search with /
+      else if (input === '/') {
+        actions.startSearch();
+      }
     }
   });
 

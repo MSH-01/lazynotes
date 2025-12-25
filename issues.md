@@ -11,16 +11,16 @@
 - [ ] add tags
 - [ ] categories
 - [ ] custom md frontmatter?
-- [ ] add todos
+- [x] add todos
 - [ ] fuzzy search
 - [ ] file search (neo tree? / telescope?)
 
 # todos (feature)
-- [ ] new tab in the 'Files' panel called 'Todos'
-- [ ] user should be able to add categories to their todos
-- [ ] user should be able to create new todos in a category
-- [ ] todos can be uncategorised
-- [ ] user can check off todos and they should be added to a 'completed' category
-- [ ] todos should be written to a .md file for storage
-- [ ] users should be able to set priorities for their todos, P1, P2, P3, P4 (Default) (Each priority should be a different colour)
-- [ ] users should be able to set due dates for their todos (though not required)
+- [x] new tab in the 'Files' panel called 'Todos'
+- [x] user should be able to add categories to their todos
+- [x] user should be able to create new todos in a category
+- [x] todos can be uncategorised
+- [x] user can check off todos and they should be added to a 'completed' category
+- [x] todos should be written to a .md file for storage
+- [x] users should be able to set priorities for their todos, P1, P2, P3, P4 (Default) (Each priority should be a different colour)
+- [x] users should be able to set due dates for their todos (though not required)
