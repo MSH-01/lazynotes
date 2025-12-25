@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "npx tsx index.jsx",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,7 +23,12 @@
   },
   "homepage": "https://github.com/MSH-01/lazynotes#readme",
   "dependencies": {
+    "@inkjs/ui": "^2.0.0",
+    "chokidar": "^5.0.0",
+    "date-fns": "^4.1.0",
     "ink": "^6.6.0",
+    "meow": "^14.0.0",
+    "pretty-bytes": "^7.1.0",
     "react": "^19.2.3"
   },
   "devDependencies": {
