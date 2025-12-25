@@ -34,8 +34,13 @@ function AppContent() {
 
   const selectedItem = flatList[selectedIndex];
 
+  const { editMode } = state;
+
   // Global keyboard shortcuts
   useInput((input, key) => {
+    // Don't handle global shortcuts in edit mode
+    if (editMode) return;
+
     // Quit
     if (input === 'q' && !modal) {
       exit();

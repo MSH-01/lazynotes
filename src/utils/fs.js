@@ -110,3 +110,7 @@ export function isDirectory(filePath) {
     return false;
   }
 }
+
+export function writeFileContent(filePath, content) {
+  fs.writeFileSync(filePath, content, 'utf8');
+}

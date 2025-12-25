@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 import { useAppContext } from '../../context/AppContext.jsx';
 
 const HINTS = {
-  preview: 'j/k:scroll  g/G:top/bottom  Ctrl+d/u:page down/up  q:quit',
+  preview: 'j/k:scroll  g/G:top/bottom  e:edit  q:quit',
   status: '0:preview  2:files  3:info  q:quit',
   fileTree: 'j/k:navigate  Enter:expand  n:new file  N:new dir  r:rename  d:delete  q:quit',
   metadata: '0:preview  1:status  2:files  q:quit',
@@ -11,9 +11,16 @@ const HINTS = {
 
 export function StatusBar() {
   const { state } = useAppContext();
-  const { focusedPanel, modal } = state;
+  const { focusedPanel, modal, editMode } = state;
 
-  const hint = modal ? 'Enter:confirm  Escape:cancel' : HINTS[focusedPanel] || '';
+  let hint;
+  if (modal) {
+    hint = 'Enter:confirm  Escape:cancel';
+  } else if (editMode) {
+    hint = 'Type to edit  Arrows:move  Ctrl+S:save  Escape:cancel';
+  } else {
+    hint = HINTS[focusedPanel] || '';
+  }
 
   return (
     <Box

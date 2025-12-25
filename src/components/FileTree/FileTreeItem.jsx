@@ -5,29 +5,35 @@ import { Box, Text } from 'ink';
 const ARROW_RIGHT = '▶';  // Collapsed
 const ARROW_DOWN = '▼';   // Expanded
 
-// File icon
+// File icon (space to align with arrows)
 const FILE_ICON = ' ';
 
-export function FileTreeItem({ item, isSelected, isExpanded, width = 30 }) {
+export function FileTreeItem({ item, isSelected, isExpanded }) {
   const indent = '  '.repeat(item.depth);
 
-  // For directories: show arrow, for files: show file icon with spacing to align
   const prefix = item.type === 'directory'
     ? (isExpanded ? ARROW_DOWN : ARROW_RIGHT)
     : FILE_ICON;
 
   const content = `${indent}${prefix} ${item.name}`;
-  // Pad to fill width
-  const paddedContent = content.padEnd(width);
 
-  const bgColor = isSelected ? 'blue' : undefined;
-  const textColor = isSelected ? 'white' : (item.type === 'directory' ? 'cyan' : 'white');
+  // Pad with spaces to ensure full width (will be truncated by terminal)
+  const paddedContent = content + ' '.repeat(200);
+
+  // Use inverse for selection - this uses terminal's own color scheme
+  if (isSelected) {
+    return (
+      <Text inverse bold wrap="truncate-end">{paddedContent}</Text>
+    );
+  }
 
   return (
-    <Box width="100%">
-      <Text backgroundColor={bgColor} color={textColor}>
-        {paddedContent}
-      </Text>
-    </Box>
+    <Text
+      color={item.type === 'directory' ? 'cyan' : undefined}
+      dimColor={item.type !== 'directory'}
+      wrap="truncate-end"
+    >
+      {content}
+    </Text>
   );
 }
