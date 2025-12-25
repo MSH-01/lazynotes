@@ -7,7 +7,7 @@ const HINTS = {
   preview: 'j/k:scroll  g/G:top/bottom  e:edit  /:search  q:quit',
   status: '0:preview  2:files  3:info  /:search  q:quit',
   fileTree: 'j/k:nav  e:edit  n:new  N:dir  r:rename  d:del  []:tab  /:search  q:quit',
-  todos: 'j/k:nav  x:toggle  n:new  p:priority  c:cat  u:due  d:del  []:tab  /:search  q:quit',
+  todos: 'j/k:nav  x:toggle  n:new  N:cat  p:priority  c:move  u:due  d:del  []:tab  /:search  q:quit',
   metadata: '0:preview  1:status  2:files  /:search  q:quit',
 };
 
