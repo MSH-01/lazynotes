@@ -5,8 +5,8 @@ import os from 'os';
 const CONFIG_DIR = path.join(os.homedir(), '.config', 'lazynotes');
 const TODOS_FILE = path.join(CONFIG_DIR, 'todos.md');
 
-// Regex to parse todo lines: - [ ] P1: Task text @due:2024-01-15
-const TODO_REGEX = /^-\s*\[([ xX])\]\s*(P[1-4]):\s*(.+?)(?:\s*@due:(\d{4}-\d{2}-\d{2}))?$/;
+// Regex to parse todo lines: - [ ] P1: Task text @due:2024-01-15 #category
+const TODO_REGEX = /^-\s*\[([ xX])\]\s*(P[1-4]):\s*(.+?)(?:\s*@due:(\d{4}-\d{2}-\d{2}))?(?:\s*#(\S+))?$/;
 
 export function getTodosFilePath() {
   return TODOS_FILE;
@@ -27,21 +27,24 @@ export function parseTodoLine(line) {
   const match = line.match(TODO_REGEX);
   if (!match) return null;
 
-  const [, checkbox, priority, text, dueDate] = match;
+  const [, checkbox, priority, text, dueDate, category] = match;
   return {
     id: generateTodoId(),
     text: text.trim(),
     completed: checkbox.toLowerCase() === 'x',
     priority,
     dueDate: dueDate || null,
+    category: category || '',
     createdAt: new Date().toISOString(),
   };
 }
 
-export function serializeTodoLine(todo) {
+export function serializeTodoLine(todo, includeCategory = false) {
   const checkbox = todo.completed ? 'x' : ' ';
   const dueStr = todo.dueDate ? ` @due:${todo.dueDate}` : '';
-  return `- [${checkbox}] ${todo.priority}: ${todo.text}${dueStr}`;
+  // Include category tag for completed items so we remember where they came from
+  const catStr = includeCategory && todo.category ? ` #${todo.category}` : '';
+  return `- [${checkbox}] ${todo.priority}: ${todo.text}${dueStr}${catStr}`;
 }
 
 export function parseTodosFile(content) {
@@ -74,8 +77,8 @@ export function parseTodosFile(content) {
         // Determine category based on section
         if (currentCategory === 'Completed') {
           todo.completed = true;
-          // Try to preserve original category from comment if exists
-          todo.category = '';
+          // Category is already parsed from the #tag in the line
+          // Keep todo.category as-is from parseTodoLine
         } else if (currentCategory === 'Uncategorised') {
           todo.category = '';
         } else {
@@ -134,10 +137,10 @@ export function serializeTodos(categories, items) {
   }
   lines.push('');
 
-  // Write Completed
+  // Write Completed (include category tag to preserve original category)
   lines.push('# Completed');
   for (const item of completedItems) {
-    lines.push(serializeTodoLine(item));
+    lines.push(serializeTodoLine(item, true));
   }
   lines.push('');
 

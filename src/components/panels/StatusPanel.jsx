@@ -12,7 +12,7 @@ export function StatusPanel() {
   const dirCount = flatList.filter(f => f.type === 'directory').length;
 
   return (
-    <Panel title="[1] Status" isFocused={isFocused} height={5}>
+    <Panel title="[1] Status" isFocused={isFocused} height={3}>
       <Box flexDirection="column">
         <Text>
           <Text color="gray">Files: </Text>

@@ -4,29 +4,7 @@ import { Panel } from '../common/Panel.jsx';
 import { useAppContext } from '../../context/AppContext.jsx';
 
 const CREDITS = `
-  ╭─────────────────────────────────────╮
-  │           L A Z Y N O T E S         │
-  │                                     │
-  │   A terminal-based note manager     │
-  │   inspired by Lazygit               │
-  │                                     │
-  │   Built with:                       │
-  │   • React + Ink                     │
-  │   • Node.js                         │
-  │                                     │
-  │   Keyboard shortcuts:               │
-  │   0-4    Switch panels              │
-  │   j/k    Navigate / Scroll          │
-  │   Enter  Expand/collapse folders    │
-  │   e      Edit file in $EDITOR       │
-  │   n      New file                   │
-  │   N      New directory              │
-  │   r      Rename                     │
-  │   d      Delete                     │
-  │   q      Quit                       │
-  │                                     │
-  │   github.com/MSH-01/lazynotes       │
-  ╰─────────────────────────────────────╯
+Lazynotes
 `;
 
 export function PreviewPanel({ maxHeight = 20, onOpenEditor }) {

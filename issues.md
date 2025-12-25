@@ -1,18 +1,17 @@
 # todos
-- [ ] weird situation where on start you have to focus to scroll app down
 - [ ] fix up colours
 - [ ] fix up dialogs / modals
 - [ ] rewrite credits
-- [ ] fix up lag on preview
 - [ ] find better use case for status
 - [ ] fix up logs
 
+# bugs
+- [ ] weird situation where on start you have to focus to scroll app down
+- [ ] fix up lag on preview
+
 # features
-- [ ] add tags
-- [ ] categories
-- [ ] custom md frontmatter?
 - [x] add todos
-- [ ] fuzzy search
+- [x] fuzzy search
 - [ ] file search (neo tree? / telescope?)
 
 # todos (feature)
@@ -24,3 +23,12 @@
 - [x] todos should be written to a .md file for storage
 - [x] users should be able to set priorities for their todos, P1, P2, P3, P4 (Default) (Each priority should be a different colour)
 - [x] users should be able to set due dates for their todos (though not required)
+
+# notes (feature)
+- [ ] allow user to include backlinks
+- [ ] add md frontmatter
+  - [ ] tags
+  - [ ] categories
+  - [ ] created by, edited, created
+  - [ ] 
+- [ ] only allow users to make md files
