@@ -32,7 +32,7 @@ export function Panel({
           {typeof title === 'string' ? <Text color={borderColor}>{title}</Text> : title}
         </Box>
       )}
-      <Box flexDirection="column" flexGrow={1} paddingX={1} paddingTop={title ? 0 : 0}>
+      <Box flexDirection="column" flexGrow={1} paddingTop={title ? 0 : 0}>
         {children}
       </Box>
     </Box>

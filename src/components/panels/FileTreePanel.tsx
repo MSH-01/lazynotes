@@ -289,7 +289,7 @@ export function FileTreePanel({
   // Build the title with tabs
   const titleContent = (
     <>
-      <Text>[2] </Text>
+      <Text>[2]-</Text>
       <Text bold={activeTab === 'files'}>Notes</Text>
       <Text> - </Text>
       <Text bold={activeTab === 'todos'}>Todos</Text>
