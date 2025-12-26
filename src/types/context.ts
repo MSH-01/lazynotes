@@ -87,6 +87,9 @@ export interface SelectionActions {
   // Visual mode
   enterVisualMode: () => void;
   exitVisualMode: () => void;
+
+  // Search reset
+  resetSelectionOnSearch: () => void;
 }
 
 // ============================================================================
@@ -110,6 +113,7 @@ export interface FileSystemActions {
   createFile: (name: string) => void;
   createDirectory: (name: string) => void;
   renameItem: (newName: string) => void;
+  moveItem: (newParentDir: string) => void;
   deleteItem: () => void;
   batchDeleteFiles: (paths: string[]) => void;
   reloadPreview: () => void;

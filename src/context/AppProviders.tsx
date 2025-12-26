@@ -45,12 +45,9 @@ function ContextCoordinator({ children }: { children: ReactNode }) {
   // Reset selection when search is confirmed
   useEffect(() => {
     if (searchState.searchFilter && searchState.searchFilter.length > 0) {
-      selectionActions.setFileSelectedIndex(0);
-      selectionActions.setFileScrollOffset(0);
-      selectionActions.setTodoSelectedIndex(0);
-      selectionActions.setTodoScrollOffset(0);
+      selectionActions.resetSelectionOnSearch();
     }
-  }, [searchState.searchFilter, selectionActions]);
+  }, [searchState.searchFilter, selectionActions.resetSelectionOnSearch]);
 
   // Load preview content when file selection changes
   useEffect(() => {
@@ -261,6 +258,7 @@ export function useApp() {
       createFile: fileSystem.actions.createFile,
       createDirectory: fileSystem.actions.createDirectory,
       renameItem: fileSystem.actions.renameItem,
+      moveItem: fileSystem.actions.moveItem,
       deleteItem: fileSystem.actions.deleteItem,
       batchDeleteFiles: fileSystem.actions.batchDeleteFiles,
       reloadPreview: fileSystem.actions.reloadPreview,

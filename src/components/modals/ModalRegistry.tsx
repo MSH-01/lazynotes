@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import path from 'path';
 import { InputModal } from './InputModal';
 import { ConfirmModal } from './ConfirmModal';
 import { SelectModal } from './SelectModal';
@@ -16,6 +17,7 @@ interface ModalHandlers {
   createFile: (name: string) => void;
   createDirectory: (name: string) => void;
   renameItem: (newName: string) => void;
+  moveItem: (newParentDir: string) => void;
   deleteItem: () => void;
   batchDeleteFiles: (paths: string[]) => void;
   // Todo operations
@@ -42,6 +44,8 @@ interface ModalContextData {
   visualSelection: (FileTreeNode | TodoListItem)[];
   isVisualModeActive: boolean;
   getDefaultCategory: () => string;
+  fileTree: FileTreeNode[];
+  notesDirectory: string | null;
 }
 
 interface ModalRegistryProps {
@@ -64,6 +68,21 @@ function getTodoItemsFromSelection(selection: (FileTreeNode | TodoListItem)[]): 
   return selection.filter(isTodoItemInSelection);
 }
 
+/** Recursively collect all directories from file tree */
+function collectDirectories(tree: FileTreeNode[], basePath: string): string[] {
+  const dirs: string[] = [basePath];
+  function walk(nodes: FileTreeNode[]) {
+    for (const node of nodes) {
+      if (node.type === 'directory') {
+        dirs.push(node.path);
+        if (node.children) walk(node.children);
+      }
+    }
+  }
+  walk(tree);
+  return dirs;
+}
+
 // ============================================================================
 // Modal Registry Component
 // ============================================================================
@@ -79,6 +98,8 @@ export function ModalRegistry({ modal, context, handlers }: ModalRegistryProps):
     visualSelection,
     isVisualModeActive,
     getDefaultCategory,
+    fileTree,
+    notesDirectory,
   } = context;
 
   const {
@@ -86,6 +107,7 @@ export function ModalRegistry({ modal, context, handlers }: ModalRegistryProps):
     createFile,
     createDirectory,
     renameItem,
+    moveItem,
     deleteItem,
     batchDeleteFiles,
     createTodo,
@@ -162,6 +184,47 @@ export function ModalRegistry({ modal, context, handlers }: ModalRegistryProps):
         message={`Are you sure you want to delete "${selectedFileItem.name}"?`}
         onConfirm={() => {
           deleteItem();
+          onCancel();
+        }}
+        onCancel={onCancel}
+      />
+    );
+  }
+
+  // ============================================================================
+  // Move File Modal
+  // ============================================================================
+
+  // Memoize directory options for move modal
+  const moveFileOptions = useMemo(() => {
+    if (modal !== 'moveFile' || !selectedFileItem || !notesDirectory) return [];
+
+    const allDirs = collectDirectories(fileTree, notesDirectory);
+    const currentDir = path.dirname(selectedFileItem.path);
+
+    // Filter out current directory and (for directories) itself and subdirectories
+    const validDirs = allDirs.filter((d) => {
+      if (d === currentDir) return false;
+      if (selectedFileItem.type === 'directory' && d.startsWith(selectedFileItem.path + '/')) return false;
+      if (selectedFileItem.type === 'directory' && d === selectedFileItem.path) return false;
+      return true;
+    });
+
+    // Format for display: show relative path or "/ (root)"
+    return validDirs.map((d) =>
+      d === notesDirectory ? '/ (root)' : d.replace(notesDirectory + '/', '')
+    );
+  }, [modal, selectedFileItem, notesDirectory, fileTree]);
+
+  if (modal === 'moveFile' && selectedFileItem && notesDirectory) {
+    return (
+      <SelectModal
+        title="Move to"
+        options={moveFileOptions}
+        onSelect={(selected) => {
+          const targetDir =
+            selected === '/ (root)' ? notesDirectory : path.join(notesDirectory, selected);
+          moveItem(targetDir);
           onCancel();
         }}
         onCancel={onCancel}

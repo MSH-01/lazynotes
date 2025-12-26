@@ -176,6 +176,10 @@ export function SelectionProvider({ children, getActiveTab }: SelectionProviderP
     exitVisualMode: useCallback(() => {
       dispatch({ type: 'EXIT_VISUAL_MODE' });
     }, []),
+
+    resetSelectionOnSearch: useCallback(() => {
+      dispatch({ type: 'RESET_SELECTION_ON_SEARCH' });
+    }, []),
   };
 
   return <SelectionContext.Provider value={{ state, actions }}>{children}</SelectionContext.Provider>;

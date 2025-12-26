@@ -14,6 +14,7 @@ export type SingleItemModalType =
   | 'createDir'
   | 'rename'
   | 'delete'
+  | 'moveFile'
   | 'createTodo'
   | 'editTodo'
   | 'createCategory'

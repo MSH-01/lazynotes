@@ -157,6 +157,8 @@ export function FileTreePanel({
           actions.setModal('createDir');
         } else if (input === 'r') {
           actions.setModal('rename');
+        } else if (input === 'm') {
+          actions.setModal('moveFile');
         } else if (input === 'd') {
           if (visualMode.active) {
             actions.setModal('batchDeleteFiles');

@@ -105,6 +105,16 @@ export function renameItem(oldPath: string, newName: string): string {
 }
 
 /**
+ * Move a file or directory to a new parent directory
+ */
+export function moveItem(oldPath: string, newParentDir: string): string {
+  const name = path.basename(oldPath);
+  const newPath = path.join(newParentDir, name);
+  fs.renameSync(oldPath, newPath);
+  return newPath;
+}
+
+/**
  * Delete a file or directory (recursively for directories)
  */
 export function deleteItem(itemPath: string): void {

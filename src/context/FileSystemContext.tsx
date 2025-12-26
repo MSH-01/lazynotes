@@ -7,12 +7,14 @@ import React, {
   ReactNode,
 } from 'react';
 import type { FileSystemState, FileSystemActions, FileTreeNode } from '../types';
+import path from 'path';
 import {
   readDirectoryTree,
   loadDirectoryChildren,
   createFile as fsCreateFile,
   createDirectory as fsCreateDirectory,
   renameItem as fsRenameItem,
+  moveItem as fsMoveItem,
   deleteItem as fsDeleteItem,
   readFileContent,
 } from '../utils/fs';
@@ -79,6 +81,17 @@ function fileSystemReducer(state: FileSystemState, action: FileSystemAction): Fi
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/**
+ * Ensure filename has .md extension if no extension is specified
+ * Does not modify names that already have an extension or start with a dot
+ */
+function ensureMdExtension(name: string): string {
+  const dotIndex = name.lastIndexOf('.');
+  // Already has extension (not at start like .gitignore)
+  if (dotIndex > 0) return name;
+  return name + '.md';
+}
 
 function buildFlatList(
   tree: FileTreeNode[],
@@ -207,9 +220,12 @@ export function FileSystemProvider({
             item.type === 'directory' ? item.path : item.path.substring(0, item.path.lastIndexOf('/'));
         }
 
+        // Auto-add .md extension if not specified
+        const fileName = ensureMdExtension(name);
+
         try {
-          fsCreateFile(targetDir, name);
-          logCommand?.(`Created file: ${name}`);
+          fsCreateFile(targetDir, fileName);
+          logCommand?.(`Created file: ${fileName}`);
           loadTree();
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
@@ -250,14 +266,50 @@ export function FileSystemProvider({
         const item = list[index];
         if (!item) return;
 
+        // Auto-add .md extension for files (not directories)
+        const finalName = item.type === 'file' ? ensureMdExtension(newName) : newName;
+
         try {
           const oldName = item.name;
-          fsRenameItem(item.path, newName);
-          logCommand?.(`Renamed: ${oldName} → ${newName}`);
+          fsRenameItem(item.path, finalName);
+          logCommand?.(`Renamed: ${oldName} → ${finalName}`);
           loadTree();
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           logCommand?.(`Error renaming: ${message}`);
+        }
+      },
+      [state.flatList, getSelectedIndex, getDisplayList, logCommand, loadTree]
+    ),
+
+    moveItem: useCallback(
+      (newParentDir: string) => {
+        const list = getDisplayList?.() ?? state.flatList;
+        const index = getSelectedIndex?.() ?? 0;
+        const item = list[index];
+        if (!item) return;
+
+        const currentDir = path.dirname(item.path);
+
+        // Don't move to same directory
+        if (currentDir === newParentDir) {
+          logCommand?.(`Already in that directory`);
+          return;
+        }
+
+        // Don't move directory into itself or its subdirectories
+        if (item.type === 'directory' && newParentDir.startsWith(item.path + '/')) {
+          logCommand?.(`Cannot move directory into itself`);
+          return;
+        }
+
+        try {
+          fsMoveItem(item.path, newParentDir);
+          logCommand?.(`Moved: ${item.name}`);
+          loadTree();
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          logCommand?.(`Error moving: ${message}`);
         }
       },
       [state.flatList, getSelectedIndex, getDisplayList, logCommand, loadTree]

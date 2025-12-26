@@ -1,5 +1,6 @@
 # lazynotes 
 (new name pending)
+warning: this is very vibey
 
 ## Overview
 Lazynotes is a super simple notes and todos management terminal application, heavily inspired by [lazygit](https://github.com/jesseduffield/lazygit).

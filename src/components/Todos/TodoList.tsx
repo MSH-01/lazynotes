@@ -20,7 +20,7 @@ interface TodosState {
 export function TodoList({ maxHeight = 20 }: TodoListProps): React.ReactElement {
   const { state, actions } = useApp();
   const { todos, searchFilter, visualMode } = state;
-  const { flatList, selectedIndex, expandedCategories, scrollOffset } = todos;
+  const { flatList, selectedIndex, expandedCategories, scrollOffset, items: allTodoItems } = todos;
 
   // Helper to check if an index is in visual selection range
   const isInVisualRange = useCallback(
@@ -33,10 +33,19 @@ export function TodoList({ maxHeight = 20 }: TodoListProps): React.ReactElement 
     [visualMode, selectedIndex]
   );
 
-  // For search, only filter todo items (not categories)
+  // For search, use ALL todo items (not just visible ones from flatList)
+  // This ensures search works even when categories are collapsed
   const todoItems = useMemo(
-    () => flatList.filter((item): item is TodoItemType => isTodoItem(item)),
-    [flatList]
+    () => allTodoItems.filter((item): item is TodoItemType => isTodoItem(item)),
+    [allTodoItems]
+  );
+
+  // Memoize the filter change callback to prevent effect re-runs
+  const handleFilterChange = useCallback(
+    (filtered: TodoItemType[] | null) => {
+      actions.setFilteredTodoList(filtered as TodoListItem[] | null);
+    },
+    [actions.setFilteredTodoList]
   );
 
   // Filter list based on confirmed search filter using the shared hook
@@ -44,10 +53,7 @@ export function TodoList({ maxHeight = 20 }: TodoListProps): React.ReactElement 
     items: todoItems,
     searchKey: 'text',
     filter: searchFilter,
-    onFilterChange: (filtered) => {
-      // Cast back to TodoListItem[] for the context
-      actions.setFilteredTodoList(filtered as TodoListItem[] | null);
-    },
+    onFilterChange: handleFilterChange,
   });
 
   // Use filtered todos when searching, otherwise use full flat list

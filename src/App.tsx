@@ -151,6 +151,8 @@ function AppContent({ onOpenEditor }: AppContentProps): React.ReactElement {
     visualSelection: actions.getVisualSelection(),
     isVisualModeActive: visualMode.active,
     getDefaultCategory,
+    fileTree: state.fileTree,
+    notesDirectory: state.notesDirectory,
   };
 
   const modalHandlers = {
@@ -158,6 +160,7 @@ function AppContent({ onOpenEditor }: AppContentProps): React.ReactElement {
     createFile: (name: string) => actions.createFile(name),
     createDirectory: (name: string) => actions.createDirectory(name),
     renameItem: (newName: string) => actions.renameItem(newName),
+    moveItem: (newParentDir: string) => actions.moveItem(newParentDir),
     deleteItem: () => actions.deleteItem(),
     batchDeleteFiles: (paths: string[]) => actions.batchDeleteFiles(paths),
     createTodo: (input: { text: string; priority: Priority; category: string; dueDate: string | null }) => {
