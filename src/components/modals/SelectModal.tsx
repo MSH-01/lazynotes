@@ -19,6 +19,14 @@ export function SelectModal({
   const terminalHeight = stdout?.rows || 24;
   const terminalWidth = stdout?.columns || 80;
 
+  const modalWidth = Math.floor(terminalWidth / 2);
+  const contentHeight = options.length + 2; // options + help text
+
+  // Fill modal with spaces to obscure content behind
+  const spaceFill = Array(contentHeight)
+    .fill(" ".repeat(modalWidth - 2))
+    .join("\n");
+
   useInput((input, key) => {
     if (key.escape) {
       onCancel();
@@ -44,15 +52,19 @@ export function SelectModal({
     >
       <Box
         flexDirection="column"
-        borderStyle="double"
+        borderStyle="round"
         borderColor="blue"
-        paddingX={2}
-        paddingY={1}
-        minWidth={40}
+        width={modalWidth}
       >
-        <Text bold color="blue">
-          {title}
-        </Text>
+        {/* Space fill to obscure content behind */}
+        <Box position="absolute" width={modalWidth - 2} height={contentHeight}>
+          <Text>{spaceFill}</Text>
+        </Box>
+        <Box paddingX={1} marginTop={-1} marginLeft={0} position="absolute">
+          <Text bold color="blue">
+            {title}
+          </Text>
+        </Box>
         <Box marginTop={1} flexDirection="column">
           {options.map((option, index) => (
             <Text key={option} inverse={index === selectedIndex} bold={index === selectedIndex}>

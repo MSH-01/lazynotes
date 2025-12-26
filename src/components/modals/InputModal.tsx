@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput, useStdout } from 'ink';
-import { TextInput } from '@inkjs/ui';
+import React, { useState } from "react";
+import { Box, Text, useInput, useStdout } from "ink";
+import { TextInput } from "@inkjs/ui";
 
 interface InputModalProps {
   title: string;
@@ -13,7 +13,7 @@ interface InputModalProps {
 export function InputModal({
   title,
   placeholder,
-  initialValue = '',
+  initialValue = "",
   onSubmit,
   onCancel,
 }: InputModalProps): React.ReactElement {
@@ -21,6 +21,13 @@ export function InputModal({
   const { stdout } = useStdout();
   const terminalHeight = stdout?.rows || 24;
   const terminalWidth = stdout?.columns || 80;
+
+  const modalWidth = Math.floor(terminalWidth / 2);
+
+  // Fill modal with spaces to obscure content behind
+  const spaceFill = Array(3)
+    .fill(" ".repeat(modalWidth - 2)) // -2 for borders
+    .join("\n");
 
   useInput((_input, key) => {
     if (key.escape) {
@@ -44,16 +51,21 @@ export function InputModal({
     >
       <Box
         flexDirection="column"
-        borderStyle="double"
+        borderStyle="round"
         borderColor="blue"
-        paddingX={2}
-        paddingY={1}
-        minWidth={40}
+        width={modalWidth}
       >
-        <Text bold color="blue">
-          {title}
-        </Text>
-        <Box marginTop={1}>
+        {/* Space fill to obscure content behind */}
+        <Box position="absolute" width={modalWidth - 2} height={3}>
+          <Text>{spaceFill}</Text>
+        </Box>
+        {/* Title embedded in border */}
+        <Box paddingX={1} marginTop={-1} marginLeft={0} position="absolute">
+          <Text bold color="blue">
+            {title}
+          </Text>
+        </Box>
+        <Box>
           <TextInput
             placeholder={placeholder}
             // @ts-expect-error - TextInput supports value prop at runtime but types are incomplete
