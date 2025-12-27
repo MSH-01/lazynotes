@@ -123,20 +123,38 @@ export function PreviewPanel({
 
     const lines = previewContent.split('\n');
     const visibleLines = lines.slice(previewScrollOffset, previewScrollOffset + maxHeight);
-    const hasMore = lines.length > maxHeight;
+    const totalLines = lines.length;
+    const hasMore = totalLines > maxHeight;
+
+    // Calculate scrollbar based on source lines
+    const scrollbarHeight = maxHeight;
+    const thumbSize = Math.max(1, Math.floor((maxHeight / totalLines) * scrollbarHeight));
+    const maxScroll = Math.max(1, totalLines - maxHeight);
+    const thumbPosition = Math.floor((previewScrollOffset / maxScroll) * (scrollbarHeight - thumbSize));
+
+    const scrollbarChars: string[] = [];
+    if (hasMore) {
+      for (let i = 0; i < scrollbarHeight; i++) {
+        if (i >= thumbPosition && i < thumbPosition + thumbSize) {
+          scrollbarChars.push('█');
+        } else {
+          scrollbarChars.push('░');
+        }
+      }
+    }
+
+    // Join visible lines, preserving empty lines
+    const visibleContent = visibleLines.map(line => line || ' ').join('\n');
 
     return (
-      <Box flexDirection="column">
-        {visibleLines.map((line, i) => (
-          <Text key={previewScrollOffset + i} wrap="truncate-end">
-            {line || ' '}
-          </Text>
-        ))}
+      <Box flexDirection="row">
+        <Box flexDirection="column" flexGrow={1}>
+          <Text wrap="wrap">{visibleContent}</Text>
+        </Box>
         {hasMore && (
-          <Text color="gray" dimColor>
-            [{previewScrollOffset + 1}-{Math.min(previewScrollOffset + maxHeight, lines.length)} of{' '}
-            {lines.length} lines]
-          </Text>
+          <Box flexDirection="column" marginLeft={1}>
+            <Text color="gray">{scrollbarChars.join('\n')}</Text>
+          </Box>
         )}
       </Box>
     );
