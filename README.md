@@ -12,30 +12,51 @@ It's still in it's infancy so relax about features.
 
 ## Installation
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm
+### Download Binary (Recommended)
+No dependencies required - just download and run.
+
+Download the latest binary for your platform from [Releases](https://github.com/MSH-01/lazynotes/releases):
+
+```bash
+# Download and extract
+tar -xzf lazynotes-darwin-arm64.tar.gz  # or lazynotes-darwin-x64.tar.gz for Intel
+
+# Install globally
+./install.sh
+
+# Or manually copy to PATH
+sudo cp lazynotes /usr/local/bin/
+```
+
+Then run `lazynotes` from anywhere.
 
 ### From Source
+Prerequisites: [Node.js](https://nodejs.org/) (v18+)
+
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/MSH-01/lazynotes.git
 cd lazynotes
-
-# Install dependencies
 npm install
 
-# Run the application
+# Run
 npm start
 ```
 
-### Global Install (Development)
-```bash
-# From the project directory
-npm link
+### Build from Source
+Prerequisites: [Bun](https://bun.sh)
 
-# Now you can run from anywhere
-lazynotes
+```bash
+# Build for current platform
+npm run build
+
+# Build for specific platform
+npm run build:mac-arm    # Apple Silicon
+npm run build:mac-intel  # Intel Mac
+npm run build:all        # Both
+
+# Binary output in dist/
+./dist/lazynotes
 ```
 
 ### Notes
@@ -97,7 +118,7 @@ You can create todo items, categories, subcategories, due dates, priorities and 
 | 10000+ | 7 | Enlightened |
 
 ## Known Issues
-- [x] Jarring overflow when you first load into the app - focus on a panel using `0`, `1`, `2` to fix
+- [x] ~~Jarring overflow when you first load into the app~~ Fixed with fullscreen-ink
 
 ## Roadmap
 **Notes**
