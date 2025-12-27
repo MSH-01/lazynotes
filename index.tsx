@@ -1,22 +1,21 @@
 #!/usr/bin/env npx tsx
 import React from 'react';
-import { render } from 'ink';
+import { withFullScreen } from 'fullscreen-ink';
 import { spawnSync } from 'child_process';
 import { App } from './src/App';
 
-// Enter alternate screen buffer (like lazygit, vim, etc.)
+// Enter alternate screen buffer (for editor)
 const enterAltScreen = (): void => {
-  // process.stdout.write('\x1b]0;lazynotes\x07'); // Set terminal title
-  process.stdout.write('\x1b[?1049h'); // Enter alternate screen
-  process.stdout.write('\x1b[?25l'); // Hide cursor
-  process.stdout.write('\x1b[2J'); // Clear screen
-  process.stdout.write('\x1b[H'); // Move cursor to top-left
+  process.stdout.write('\x1b[?1049h');
+  process.stdout.write('\x1b[?25l');
+  process.stdout.write('\x1b[2J');
+  process.stdout.write('\x1b[H');
 };
 
-// Exit alternate screen buffer and restore terminal
+// Exit alternate screen buffer
 const exitAltScreen = (): void => {
-  process.stdout.write('\x1b[?25h'); // Show cursor
-  process.stdout.write('\x1b[?1049l'); // Exit alternate screen
+  process.stdout.write('\x1b[?25h');
+  process.stdout.write('\x1b[?1049l');
 };
 
 // Open file in external editor
@@ -34,28 +33,5 @@ const openEditor = (filePath: string): void => {
   enterAltScreen();
 };
 
-// Enter fullscreen immediately
-enterAltScreen();
-
-// Handle cleanup on exit
-const cleanup = (): void => {
-  exitAltScreen();
-};
-
-process.on('exit', cleanup);
-process.on('SIGINT', () => {
-  cleanup();
-  process.exit(0);
-});
-process.on('SIGTERM', () => {
-  cleanup();
-  process.exit(0);
-});
-
-// Render the app
-const { waitUntilExit } = render(<App onOpenEditor={openEditor} />);
-
-// Wait for app to exit, then cleanup
-waitUntilExit().then(() => {
-  cleanup();
-});
+// Render the app with fullscreen-ink
+withFullScreen(<App onOpenEditor={openEditor} />).start();

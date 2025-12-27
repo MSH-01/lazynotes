@@ -97,7 +97,7 @@ You can create todo items, categories, subcategories, due dates, priorities and 
 | 10000+ | 7 | Enlightened |
 
 ## Known Issues
-- [ ] Jarring overflow when you first load into the app - focus on a panel using `0`, `1`, `2` to fix
+- [x] Jarring overflow when you first load into the app - focus on a panel using `0`, `1`, `2` to fix
 
 ## Roadmap
 **Notes**
@@ -108,6 +108,6 @@ You can create todo items, categories, subcategories, due dates, priorities and 
 - [ ] Categories / Subcategories
 
 **Todos**
-- [ ] Edit existing todos
+- [x] Edit existing todos
 - [ ] Filtering
 - [ ] Auto-archive for completed todos
