@@ -6,6 +6,7 @@ warning: this is very vibey
 Lazynotes is a super simple notes and todos management terminal application, heavily inspired by [lazygit](https://github.com/jesseduffield/lazygit).
 
 ![Screenshot of Todos](docs/images/todos.png)
+![Screenshot of Todos](docs/images/notes.png)
 
 It's still in it's infancy so relax about features.
 
